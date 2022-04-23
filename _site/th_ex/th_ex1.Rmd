@@ -1,0 +1,118 @@
+---
+title: "Take-home Exercise 1"
+description: |
+  In this take home exercise I will.....
+author:
+  - name: Heranshan Subramaniam
+    url: https://example.com/norajones
+    affiliation: Spacely Sprockets
+    affiliation_url: https://example.com/spacelysprokets
+date: "`r Sys.Date()`"
+output: distill::distill_article
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+
+Call library and data
+
+```{r}
+packages = c("tidyverse")
+
+for (p in packages) {
+  if(!require(p, character.only = T)) {
+    install.packages(p)
+  }
+  library(p, character.only = T)
+}
+
+participants <- read_csv("data/Participants.csv")
+
+```
+
+Household Size vs Kids
+
+```{r}
+ggplot(data=participants, aes(x=householdSize, fill = haveKids)) +
+  geom_bar() +
+  theme_minimal()
+```
+
+Age vs Education Level
+
+```{r}
+ggplot(data=participants, aes(y=educationLevel, x=age)) +
+  geom_boxplot() +
+  stat_summary(geom = "point",
+               fun="mean",
+               colour="red",
+               size=4) +
+  theme_minimal()
+```
+
+Age vs Kids Histogram
+
+```{r}
+p <- participants[,-3]
+
+ggplot(participants, aes(x= age, fill = haveKids)) +
+  geom_histogram(data=p, fill = "grey",
+                 alpha = .5, bins = 20) +
+  geom_histogram(colour = "black", bins=20) +
+  facet_wrap(~ haveKids) +
+  guides(fill = "none") +
+  theme_minimal()
+```
+
+Joviality vs Kids boxplot
+
+```{r}
+ggplot(data=participants, aes(y=haveKids, x=joviality)) +
+  geom_boxplot() +
+  stat_summary(geom = "point",
+               fun="mean",
+               colour="red",
+               size=4) +
+  coord_flip() +
+  ylab("Have Kids") +
+  xlab("Joviality") +
+  theme_minimal()
+```
+
+Joviality vs Activity
+
+```{r}
+ggplot(data=participants, aes(x= reorder(interestGroup, joviality, FUN =median), 
+                              y=joviality)) +
+  geom_boxplot() +
+  stat_summary(geom = "point",
+               fun="mean",
+               colour="red",
+               size=4) +
+  xlab("Interest Group") +
+  ylab("Joviality") +
+  theme_minimal()
+```
+
+Activity Favoured by Those with and without Kids (Stacked %)
+
+```{r}
+ggplot(participants, aes(fill=haveKids, x=interestGroup)) + 
+    geom_bar(position="fill") +
+  theme_minimal()
+```
+
+Activity Favoured by Those with and without Kids (Stacked Count)
+
+```{r}
+ggplot(data=participants, aes(x=interestGroup, fill = haveKids)) +
+  geom_bar() +
+  theme_minimal()
+```
+
+
+
+
