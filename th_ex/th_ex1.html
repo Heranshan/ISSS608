@@ -2502,9 +2502,9 @@ Computing and Information Systems)<a href="https://scis.smu.edu.sg/" class="uri"
 <h1 id="overview">Overview</h1>
 <p>In this take-home exercise, appropriate static statistical graphics
 methods are used to reveal the demographic of the city of engagement,
-Ohio USA. The data will be processed by using appropriate tidyverse
-family of packages and the statistical graphics will be prepared using
-ggplot2 and its extensions.</p>
+Ohio USA. The data will be processed by using appropriate <a href="https://www.tidyverse.org/"><strong>tidyverse</strong></a> family
+of packages and the statistical graphics will be prepared using <a href="https://ggplot2.tidyverse.org/index.html"><strong>ggplot2</strong></a>
+and its extensions.</p>
 <h1 id="getting-started">Getting Started</h1>
 <p>The required packages will be called with the following code
 chunk:</p>
@@ -2546,16 +2546,18 @@ package and save it as a tibble data frame called <em>metadata</em>.</p>
 </div>
 <h1 id="data-preperation">Data Preperation</h1>
 <p>The following code chunk will be used to change the data type of the
-variables in <em>participants</em>.</p>
+variables in <em>participants</em> using the <code>as.character()</code>
+function.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="va">participants</span><span class="op">$</span><span class="va">householdSize</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html">as.character</a></span><span class="op">(</span><span class="va">participants</span><span class="op">$</span><span class="va">householdSize</span><span class="op">)</span>
 </code></pre>
 </div>
 </div>
-<p>The following code chunk will be used to order the education levels
-in <em>participants</em>. Order used will be from the least advanced to
-the most advanced qualification.</p>
+<p>The following code chunk will order the education levels in
+<em>participants</em> using the <code>factor()</code> function. Order
+used will be from the least advanced to the most advanced
+qualification.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="va">participants</span><span class="op">$</span><span class="va">educationLevel</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="va">participants</span><span class="op">$</span><span class="va">educationLevel</span>,
@@ -2565,8 +2567,9 @@ the most advanced qualification.</p>
 </div>
 </div>
 <h1 id="metadata">Metadata</h1>
-<p>The following code chunk will print out the table for participants
-metadata.</p>
+<p>The <a href="https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_html.html"><code>knitr::kable</code></a>
+function is used in the following code chunk to output the table for
+participants metadata.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">metadata</span>,
@@ -2635,9 +2638,12 @@ participant’s overall happiness level at the start of the study</td>
 <h1 id="analysis">Analysis</h1>
 <h2 id="household-size-versus-kids">Household Size versus Kids</h2>
 <p>The code chunk below plots a bar chart by using
-<code>geom_bar()</code> of ggplot2. It aims to analyze the relationship
-between the size of a household and study if that is influenced by
-whether the households have kids.</p>
+<code>geom_col()</code> of <a href="https://ggplot2.tidyverse.org/reference/index.html"><strong>ggplot2</strong></a>.
+It aims to analyze the relationship between the size of a household and
+study if that is influenced by whether the households have kids.
+<code>group_by</code> and <code>summarise</code> functions are also used
+to enable the output of count values on the charts via the
+<code>geom_text</code> function.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="va">participants</span> <span class="op">%&gt;%</span>
@@ -2659,8 +2665,11 @@ member households had kids, while all 1 and 2 member households did not
 have kids.</p>
 <h2 id="education-level-of-participants">Education Level of
 Participants</h2>
-<p>The code chunk below plots a count plot for participants education
-level.</p>
+<p>The code chunk below plots a count plot using <code>geom_col()</code>
+of <a href="https://ggplot2.tidyverse.org/reference/index.html"><strong>ggplot2</strong></a>
+for participants education level. The <code>count</code> function is
+used to enable the output of count values on the charts via the
+<code>geom_text</code> function.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="va">participants</span> <span class="op">%&gt;%</span> <span class="fu">count</span><span class="op">(</span><span class="va">educationLevel</span><span class="op">)</span> <span class="op">%&gt;%</span> 
@@ -2679,11 +2688,13 @@ education level make up the smallest proportion of participants. With
 the exception of low education level, there is a decreasing trend
 observed in terms of more senior educations levels.</p>
 <h2 id="education-level-versus-age">Education Level versus Age</h2>
-<p>The following chunk code plots box plots to access whether age
-differs by education levels of participants. Notches are added to the
-box plot to help visually assess whether the medians of distributions
-differ. Mean of each group is also added to the plot, and is represented
-by a red dot.</p>
+<p>The following chunk code plots box plots using
+<code>geom_boxplot()</code> of <a href="https://ggplot2.tidyverse.org/reference/index.html"><strong>ggplot2</strong></a>
+to access whether age differs by education levels of participants.
+Notches are added to the box plot to help visually assess whether the
+medians of distributions differ. Mean of each group is also added to the
+plot using <code>stat_summary</code>, and is represented by a red
+dot.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="fu">ggplot</span><span class="op">(</span>data<span class="op">=</span><span class="va">participants</span>, <span class="fu">aes</span><span class="op">(</span>x<span class="op">=</span><span class="va">educationLevel</span>, y<span class="op">=</span><span class="va">age</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
@@ -2703,7 +2714,11 @@ relationship between education levels and age.</p>
 <h2 id="education-level-versus-kids">Education Level versus Kids</h2>
 <p>The following code chunk below plots a stacked bar chart of the
 frequency of education level split into those having kids and those who
-do not have kids.</p>
+do not have kids using <code>geom_col()</code> of <a href="https://ggplot2.tidyverse.org/reference/index.html"><strong>ggplot2</strong></a>.
+The <code>group_by</code>, <code>summarise</code> and
+<code>mutate</code> functions were used to manipulate the data and
+create a frequency column. Frequency values were shown on the charts via
+the <code>geom_text</code> function.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="va">participants</span> <span class="op">%&gt;%</span>
@@ -2727,12 +2742,18 @@ bachelors have the lowest proportion of kids, this proportion is close
 to that of the graduate group.</p>
 <h2 id="household-size-versus-education-for-participants-without-kids">Household
 Size versus Education for Participants without Kids</h2>
-<p>Th code chunk takes a subset of the participants data where haveKids
-is FALSE, to study the impact of education on household sizes. This is
-done as we have already established that all 3 person households have
-kids and the previous segment has studied the impact of education level
-on having kids. Here we aim to study if education levels has an impact
-on single person households.</p>
+<p>Th code chunk takes a subset of the participants data, using the
+<code>subset()</code> function, where haveKids is FALSE, to study the
+impact of education on household sizes. This is done as we have already
+established that all 3 person households have kids and the previous
+segment has studied the impact of education level on having kids. Here
+we aim to study if education levels has an impact on single person
+households. Stacked bar chart was plotted using <code>geom_col()</code>
+of <a href="https://ggplot2.tidyverse.org/reference/index.html"><strong>ggplot2</strong></a>.
+The <code>group_by</code>, <code>summarise</code> and
+<code>mutate</code> functions were used to manipulate the data and
+create a frequency column. Frequency values were shown on the charts via
+the <code>geom_text</code> function.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="fu"><a href="https://rdrr.io/r/base/subset.html">subset</a></span><span class="op">(</span><span class="va">participants</span>, <span class="va">participants</span><span class="op">$</span><span class="va">haveKids</span> <span class="op">==</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">%&gt;%</span>
@@ -2754,10 +2775,12 @@ with low education level form single households, while the split is more
 even for the other higher education levels.</p>
 <h2 id="education-level-and-joviality">Education Level and
 Joviality</h2>
-<p>The following chunk code plots box plots to access whether education
-levels influence the joviality of participants. Notches are added to the
-box plot to help visually assess whether the medians of distributions
-differ. Mean of each group is also added to the plot, and is represented
+<p>The following chunk code plots box plots using
+<code>geom_boxplot()</code> of <a href="https://ggplot2.tidyverse.org/reference/index.html"><strong>ggplot2</strong></a>
+to access whether education levels influence the joviality of
+participants. Notches are added to the box plot to help visually assess
+whether the medians of distributions differ. Mean of each group is also
+added to the plot using <code>stats_summary</code>, and is represented
 by a red dot.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
@@ -2781,9 +2804,15 @@ group, where the mean is much higher than the median, indicating that
 this group has outliers who have a higher joviality in comparison to the
 others in the same education level.</p>
 <h2 id="interest-group-count">Interest Group Count</h2>
-<p>The following chunk code plots bar charts sorted in ascending order
-of count for interest groups. This will allow us to identify the least
-and most popular interest group among the general population.</p>
+<p>The following chunk code plots bar charts using
+<code>geom_col()</code> of <a href="https://ggplot2.tidyverse.org/reference/index.html"><strong>ggplot2</strong></a>
+sorted in ascending order of count for interest groups via the
+<code>reorder()</code> function. This will allow us to identify the
+least and most popular interest group among the general population. The
+line depicting mean interest group participant count is plotted in red
+using <code>geom_hline</code>. The <code>count()</code> function in
+conjunction with <code>geom_text</code> is used to show the count values
+on the plot.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="va">participants</span> <span class="op">%&gt;%</span> <span class="fu">count</span><span class="op">(</span><span class="va">interestGroup</span><span class="op">)</span> <span class="op">%&gt;%</span> 
@@ -2803,11 +2832,13 @@ group is E and the most popular is J.Interest groups B, D, E and I are
 also below mean participant count for all interest groups.</p>
 <h2 id="interest-group-impact-on-joviality">Interest Group Impact on
 Joviality</h2>
-<p>The following chunk code plots box plots to study how the joviality
-of participants differs by interest group. Notches are added to the box
-plot to help visually assess whether the medians of distributions
-differ. Mean of each group is also added to the plot, and is represented
-by a red dot.</p>
+<p>The following chunk code plots box plots using
+<code>geom_boxplot()</code> of <a href="https://ggplot2.tidyverse.org/reference/index.html"><strong>ggplot2</strong></a>
+to study how the joviality of participants differs by interest group.
+Notches are added to the box plot to help visually assess whether the
+medians of distributions differ. Mean of each group is also added to the
+plot using <code>stats_summary</code>, and is represented by a red
+dot.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="fu">ggplot</span><span class="op">(</span>data<span class="op">=</span><span class="va">participants</span>, <span class="fu">aes</span><span class="op">(</span>x<span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/reorder.factor.html">reorder</a></span><span class="op">(</span><span class="va">interestGroup</span>, <span class="va">joviality</span>, <span class="va">median</span><span class="op">)</span>, 
@@ -2833,11 +2864,16 @@ interest group G that had significantly higher joviality compared to the
 rest of the participants in that group.</p>
 <h2 id="influence-of-kids-on-interest-group">Influence of Kids on
 Interest Group</h2>
-<p>The code chunk below plots a bar chart depicting the proportion of
-participants with and without kids in each interest group with the
-intend of studying which interest group applies to each group. The
-output graph is however not sorted by proportion of interest group due
-to certain limitations and is an area for future improvement.</p>
+<p>The code chunk below plots a bar chart using <code>geom_col()</code>
+of <a href="https://ggplot2.tidyverse.org/reference/index.html"><strong>ggplot2</strong></a>
+depicting the proportion of participants with and without kids in each
+interest group with the intend of studying which interest group applies
+to each group. The output graph is however not sorted by proportion of
+interest group due to certain limitations and is an area for future
+improvement. The <code>group_by</code>, <code>summarise</code> and
+<code>mutate</code> functions were used to manipulate the data and
+create a frequency column. Frequency values were shown on the charts via
+the <code>geom_text</code> function.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="va">participants</span> <span class="op">%&gt;%</span>
@@ -2859,11 +2895,12 @@ appealing to participants who have kids, while interest group A is most
 appealing to those without kids.</p>
 <h2 id="influence-of-age-on-interest-group">Influence of Age on Interest
 Group</h2>
-<p>The following chunk code plots box plots to study how the appeal of
-interest groups differs by age. Notches are added to the box plot to
-help visually assess whether the medians of distributions differ. Mean
-of each group is also added to the plot, and is represented by a red
-dot.</p>
+<p>The following chunk code plots box plots using
+<code>geom_boxplot()</code> of <a href="https://ggplot2.tidyverse.org/reference/index.html"><strong>ggplot2</strong></a>
+to study how the appeal of interest groups differs by age. Notches are
+added to the box plot to help visually assess whether the medians of
+distributions differ. Mean of each group is also added to the plot using
+<code>stats_summary</code>, and is represented by a red dot.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="fu">ggplot</span><span class="op">(</span>data<span class="op">=</span><span class="va">participants</span>, <span class="fu">aes</span><span class="op">(</span>x<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/stats/reorder.factor.html">reorder</a></span><span class="op">(</span><span class="va">interestGroup</span>, <span class="va">age</span>, <span class="va">median</span><span class="op">)</span>, y<span class="op">=</span><span class="va">age</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
@@ -2888,8 +2925,14 @@ the inverse seems true for interest group H. Further study is needed to
 acertain this.</p>
 <h2 id="influence-of-education-level-on-choice-of-interest-group">Influence
 of Education Level on Choice of Interest Group</h2>
-<p>The chunk code below plots a heat map to show the frequency
-relationship between education levels and interest group choice.</p>
+<p>The chunk code below plots a heat map using <code>geom_tile</code> of
+<a href="https://ggplot2.tidyverse.org/reference/index.html"><strong>ggplot2</strong></a>
+to show the frequency relationship between education levels and interest
+group choice. The <code>group_by</code>, <code>summarise</code> and
+<code>mutate</code> functions were used to manipulate the data and
+create a frequency column. Frequency values were shown on the charts via
+the <code>geom_text</code> function. <code>scale_fill_continuous</code>
+is used to change the colour range of the heat map.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="va">participants</span> <span class="op">%&gt;%</span>
@@ -2919,10 +2962,12 @@ preference for interest group G, while showing the lowest preference for
 interest group A.</p>
 <h2 id="influence-of-kids-on-joviality">Influence of Kids on
 Joviality</h2>
-<p>The following chunk code plots box plots to study how the having kids
-influences joviality. Notches are added to the box plot to help visually
-assess whether the medians of distributions differ. Mean of each group
-is also added to the plot, and is represented by a red dot.</p>
+<p>The following chunk code plots box plots using
+<code>geom_boxplot()</code> of <a href="https://ggplot2.tidyverse.org/reference/index.html"><strong>ggplot2</strong></a>
+to study how the having kids influences joviality. Notches are added to
+the box plot to help visually assess whether the medians of
+distributions differ. Mean of each group is also added to the plot using
+<code>stats_summary</code>, and is represented by a red dot.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="fu">ggplot</span><span class="op">(</span>data<span class="op">=</span><span class="va">participants</span>, <span class="fu">aes</span><span class="op">(</span>x<span class="op">=</span><span class="va">haveKids</span>, y<span class="op">=</span><span class="va">joviality</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
@@ -2942,10 +2987,12 @@ is also added to the plot, and is represented by a red dot.</p>
 a higher joviality than those who do not.</p>
 <h2 id="household-size-influence-on-joviality">Household Size Influence
 on Joviality</h2>
-<p>The following chunk code plots box plots to study how household size
-influences joviality. Notches are added to the box plot to help visually
-assess whether the medians of distributions differ. Mean of each group
-is also added to the plot, and is represented by a red dot.</p>
+<p>The following chunk code plots box plots using
+<code>geom_boxplot()</code> of <a href="https://ggplot2.tidyverse.org/reference/index.html"><strong>ggplot2</strong></a>
+to study how household size influences joviality. Notches are added to
+the box plot to help visually assess whether the medians of
+distributions differ. Mean of each group is also added to the plot using
+<code>stats_summary</code>, and is represented by a red dot.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span class="fu">ggplot</span><span class="op">(</span><span class="va">participants</span>,<span class="fu">aes</span><span class="op">(</span>x<span class="op">=</span><span class="va">householdSize</span>, y<span class="op">=</span><span class="va">joviality</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>

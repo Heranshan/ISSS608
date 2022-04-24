@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Overview
 
-In this take-home exercise, appropriate static statistical graphics methods are used to reveal the demographic of the city of engagement, Ohio USA. The data will be processed by using appropriate tidyverse family of packages and the statistical graphics will be prepared using ggplot2 and its extensions.
+In this take-home exercise, appropriate static statistical graphics methods are used to reveal the demographic of the city of engagement, Ohio USA. The data will be processed by using appropriate [**tidyverse**](https://www.tidyverse.org/) family of packages and the statistical graphics will be prepared using [**ggplot2**](https://ggplot2.tidyverse.org/index.html) and its extensions.
 
 # Getting Started
 
@@ -55,7 +55,7 @@ metadata <- read_csv("data/Participants_Metadata.csv")
 
 # Data Preperation
 
-The following code chunk will be used to change the data type of the variables in *participants*.
+The following code chunk will be used to change the data type of the variables in *participants* using the `as.character()` function.
 
 ```{r}
 
@@ -63,7 +63,7 @@ participants$householdSize <- as.character(participants$householdSize)
 
 ```
 
-The following code chunk will be used to order the education levels in *participants*. Order used will be from the least advanced to the most advanced qualification.
+The following code chunk will order the education levels in *participants* using the `factor()` function. Order used will be from the least advanced to the most advanced qualification.
 
 ```{r}
 participants$educationLevel <- factor(participants$educationLevel,
@@ -73,7 +73,7 @@ participants$educationLevel <- factor(participants$educationLevel,
 
 # Metadata
 
-The following code chunk will print out the table for participants metadata.
+The [`knitr::kable`](https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_html.html) function is used in the following code chunk to output the table for participants metadata.
 
 ```{r}
 
@@ -86,7 +86,7 @@ caption = "Participants Metadata")
 
 ## Household Size versus Kids
 
-The code chunk below plots a bar chart by using `geom_bar()` of ggplot2. It aims to analyze the relationship between the size of a household and study if that is influenced by whether the households have kids.
+The code chunk below plots a bar chart by using `geom_col()` of [**ggplot2**](https://ggplot2.tidyverse.org/reference/index.html). It aims to analyze the relationship between the size of a household and study if that is influenced by whether the households have kids. `group_by` and `summarise` functions are also used to enable the output of count values on the charts via the `geom_text` function.
 
 ```{r}
 participants %>%
@@ -105,7 +105,7 @@ From the plot above it can be seen that household size of 2 was the most adundan
 
 ## Education Level of Participants
 
-The code chunk below plots a count plot for participants education level. 
+The code chunk below plots a count plot using `geom_col()` of [**ggplot2**](https://ggplot2.tidyverse.org/reference/index.html) for participants education level. The `count` function is used to enable the output of count values on the charts via the `geom_text` function.
 
 ```{r}
 participants %>% count(educationLevel) %>% 
@@ -121,7 +121,7 @@ The bar chart above shows that high school or college graduates make up the larg
 
 ## Education Level versus Age
 
-The following chunk code plots box plots to access whether age differs by education levels of participants. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot, and is represented by a red dot.
+The following chunk code plots box plots using `geom_boxplot()` of [**ggplot2**](https://ggplot2.tidyverse.org/reference/index.html) to access whether age differs by education levels of participants. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot using `stat_summary`, and is represented by a red dot.
 
 ```{r}
 ggplot(data=participants, aes(x=educationLevel, y=age)) +
@@ -136,9 +136,10 @@ ggplot(data=participants, aes(x=educationLevel, y=age)) +
 
 From the plot it can be seen that there is no discernible relationship between education levels and age.
 
+
 ## Education Level versus Kids
 
-The following code chunk below plots a stacked bar chart of the frequency of education level split into those having kids and those who do not have kids.
+The following code chunk below plots a stacked bar chart of the frequency of education level split into those having kids and those who do not have kids using `geom_col()` of [**ggplot2**](https://ggplot2.tidyverse.org/reference/index.html). The `group_by`, `summarise` and `mutate` functions were used to manipulate the data and create a frequency column.  Frequency values were shown on the charts via the `geom_text` function.
 
 ```{r}
 participants %>%
@@ -158,7 +159,7 @@ From the bar chart it can be seen that the proportion of those who have kids red
 
 ## Household Size versus Education for Participants without Kids
 
-Th code chunk takes a subset of the participants data where haveKids is FALSE, to study the impact of education on household sizes. This is done as we have already established that all 3 person households have kids and the previous segment has studied the impact of education level on having kids. Here we aim to study if education levels has an impact on single person households.
+Th code chunk takes a subset of the participants data, using the `subset()` function, where haveKids is FALSE, to study the impact of education on household sizes. This is done as we have already established that all 3 person households have kids and the previous segment has studied the impact of education level on having kids. Here we aim to study if education levels has an impact on single person households. Stacked bar chart was plotted using `geom_col()` of [**ggplot2**](https://ggplot2.tidyverse.org/reference/index.html). The `group_by`, `summarise` and `mutate` functions were used to manipulate the data and create a frequency column.  Frequency values were shown on the charts via the `geom_text` function.
 
 ```{r}
 subset(participants, participants$haveKids == FALSE) %>%
@@ -178,7 +179,7 @@ From the plot above it is evident that a majority of participants with low educa
 
 ## Education Level and Joviality
 
-The following chunk code plots box plots to access whether education levels influence the joviality of participants. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot, and is represented by a red dot.
+The following chunk code plots box plots using `geom_boxplot()` of [**ggplot2**](https://ggplot2.tidyverse.org/reference/index.html) to access whether education levels influence the joviality of participants. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot using `stats_summary`, and is represented by a red dot.
 
 ```{r}
 #	Education level vs joviality
@@ -196,7 +197,7 @@ From the plot it is observed that both median and mean of joviality of the parti
 
 ## Interest Group Count
 
-The following chunk code plots bar charts sorted in ascending order of count for interest groups. This will allow us to identify the least and most popular interest group among the general population.
+The following chunk code plots bar charts using `geom_col()` of [**ggplot2**](https://ggplot2.tidyverse.org/reference/index.html) sorted in ascending order of count for interest groups via the `reorder()` function. This will allow us to identify the least and most popular interest group among the general population. The line depicting mean interest group participant count is plotted in red using `geom_hline`. The `count()` function in conjunction with `geom_text` is used to show the count values on the plot.
 
 ```{r}
 participants %>% count(interestGroup) %>% 
@@ -214,7 +215,7 @@ From the chart above it can be seen that the least popular interest group is E a
 
 ## Interest Group Impact on Joviality
 
-The following chunk code plots box plots to study how the joviality of participants differs by interest group. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot, and is represented by a red dot.
+The following chunk code plots box plots using `geom_boxplot()` of [**ggplot2**](https://ggplot2.tidyverse.org/reference/index.html) to study how the joviality of participants differs by interest group. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot using `stats_summary`, and is represented by a red dot.
 
 ```{r}
 ggplot(data=participants, aes(x= reorder(interestGroup, joviality, median), 
@@ -234,7 +235,7 @@ From the above plot, it is observed that participants in interest group H have t
 
 ## Influence of Kids on Interest Group
 
-The code chunk below plots a bar chart depicting the proportion of participants with and without kids in each interest group with the intend of studying which interest group applies to each group. The output graph is however not sorted by proportion of interest group due to certain limitations and is an area for future improvement.
+The code chunk below plots a bar chart using `geom_col()` of [**ggplot2**](https://ggplot2.tidyverse.org/reference/index.html) depicting the proportion of participants with and without kids in each interest group with the intend of studying which interest group applies to each group. The output graph is however not sorted by proportion of interest group due to certain limitations and is an area for future improvement. The `group_by`, `summarise` and `mutate` functions were used to manipulate the data and create a frequency column. Frequency values were shown on the charts via the `geom_text` function.
 
 ```{r}
 participants %>%
@@ -254,7 +255,7 @@ From the above output it is observed that interest group D is most appealing to 
 
 ##	Influence of Age on Interest Group
 
-The following chunk code plots box plots to study how the appeal of interest groups differs by age. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot, and is represented by a red dot.
+The following chunk code plots box plots using `geom_boxplot()` of [**ggplot2**](https://ggplot2.tidyverse.org/reference/index.html) to study how the appeal of interest groups differs by age. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot using `stats_summary`, and is represented by a red dot.
 
 ```{r}
 ggplot(data=participants, aes(x=reorder(interestGroup, age, median), y=age)) +
@@ -273,7 +274,7 @@ From the box plot it is seen that interest group E has lowest median age, indica
 
 ## Influence of Education Level on Choice of Interest Group
 
-The chunk code below plots a heat map to show the frequency relationship between education levels and interest group choice.
+The chunk code below plots a heat map using `geom_tile` of [**ggplot2**](https://ggplot2.tidyverse.org/reference/index.html) to show the frequency relationship between education levels and interest group choice. The `group_by`, `summarise` and `mutate` functions were used to manipulate the data and create a frequency column. Frequency values were shown on the charts via the `geom_text` function. `scale_fill_continuous` is used to change the colour range of the heat map.
 
 ```{r}
 participants %>%
@@ -293,7 +294,7 @@ The heatmap above allows us to see which interest group appeals to participants 
 
 ## Influence of Kids on Joviality
 
-The following chunk code plots box plots to study how the having kids influences joviality. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot, and is represented by a red dot.
+The following chunk code plots box plots using `geom_boxplot()` of [**ggplot2**](https://ggplot2.tidyverse.org/reference/index.html) to study how the having kids influences joviality. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot using `stats_summary`, and is represented by a red dot.
 
 ```{r}
 ggplot(data=participants, aes(x=haveKids, y=joviality)) +
@@ -313,7 +314,7 @@ From the output above it is observed that participants with kids have a higher j
 
 ## Household Size Influence on Joviality
 
-The following chunk code plots box plots to study how household size influences joviality. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot, and is represented by a red dot.
+The following chunk code plots box plots using `geom_boxplot()` of [**ggplot2**](https://ggplot2.tidyverse.org/reference/index.html) to study how household size influences joviality. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot using `stats_summary`, and is represented by a red dot.
 
 ```{r}
 ggplot(participants,aes(x=householdSize, y=joviality)) +
