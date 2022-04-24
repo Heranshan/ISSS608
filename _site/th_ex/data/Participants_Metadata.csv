@@ -1,0 +1,8 @@
+﻿Attribute,Data Type,Description
+participantId,Numeric,Unique ID assigned to each participant
+householdSize,Character,The number of people in the participant's household
+haveKids,Logical,Whether there are children living in the participant's household
+age,Numeric,Participant's age in years at the start of the study
+educationLevel,Factor,The participant's education level
+interestGroup,Numeric,Participant's stated primary interest group
+joviality,Numeric,"Value ranging from [0,1] indicating the participant's overall happiness level at the start of the study"

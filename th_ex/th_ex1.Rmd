@@ -1,23 +1,27 @@
 ---
 title: "Take-home Exercise 1"
 description: |
-  In this take home exercise I will.....
+  In this take home exercise I will explore the demographics of the participants in the city of engagement, Ohio USA.
 author:
   - name: Heranshan Subramaniam
-    url: https://example.com/norajones
-    affiliation: Spacely Sprockets
-    affiliation_url: https://example.com/spacelysprokets
+    url: https://www.linkedin.com/in/heranshan/
+    affiliation: School of Computing and Information Systems
+    affiliation_url: https://scis.smu.edu.sg/
 date: "`r Sys.Date()`"
 output: distill::distill_article
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Overview
 
+In this take-home exercise, appropriate static statistical graphics methods are used to reveal the demographic of the city of engagement, Ohio USA. The data will be processed by using appropriate tidyverse family of packages and the statistical graphics will be prepared using ggplot2 and its extensions.
 
-Call library and data
+# Getting Started
+
+The required packages will be called with the following code chunk:
 
 ```{r}
 packages = c("tidyverse")
@@ -29,65 +33,193 @@ for (p in packages) {
   library(p, character.only = T)
 }
 
+```
+
+# Importing Data
+
+The code chunk below will import *Participants.csv* from the data folder into R by using [`read_csv()`](https://readr.tidyverse.org/reference/read_delim.html) of [**readr**](https://readr.tidyverse.org/) package and save it as a tibble data frame called *participants*.
+
+```{r}
+
 participants <- read_csv("data/Participants.csv")
 
 ```
 
-Household Size vs Kids
+The following code chunk will import *Participants_Metadata.csv* from the data folder in to R by using [`read_csv()`](https://readr.tidyverse.org/reference/read_delim.html) of [**readr**](https://readr.tidyverse.org/) package and save it as a tibble data frame called *metadata*.
 
 ```{r}
-ggplot(data=participants, aes(x=householdSize, fill = haveKids)) +
-  geom_bar() +
+
+metadata <- read_csv("data/Participants_Metadata.csv")
+
+```
+
+# Data Preperation
+
+The following code chunk will be used to change the data type of the variables in *participants*.
+
+```{r}
+
+participants$householdSize <- as.character(participants$householdSize)
+
+```
+
+The following code chunk will be used to order the education levels in *participants*. Order used will be from the least advanced to the most advanced qualification.
+
+```{r}
+participants$educationLevel <- factor(participants$educationLevel,
+                                      levels =  c("Low", "HighSchoolOrCollege", 
+                                                  "Bachelors", "Graduate"))
+```
+
+# Metadata
+
+The following code chunk will print out the table for participants metadata.
+
+```{r}
+
+knitr::kable(metadata,
+caption = "Participants Metadata")
+
+```
+
+# Analysis
+
+## Household Size versus Kids
+
+The code chunk below plots a bar chart by using `geom_bar()` of ggplot2. It aims to analyze the relationship between the size of a household and study if that is influenced by whether the households have kids.
+
+```{r}
+participants %>%
+  group_by(householdSize, haveKids) %>%
+  summarise(n = n()) %>%
+  ggplot(aes(fill=haveKids, x=householdSize, y=n)) + 
+  geom_col() +
+  geom_text(aes(label = n), size = 3, position = position_stack(vjust = 0.5)) +
+  labs(x="Household Size", y="Count",
+       title = "Household Size versus Kids", fill = "Have Kids?") +
   theme_minimal()
 ```
 
-Age vs Education Level
+From the plot above it can be seen that household size of 2 was the most adundant, followed by 1 and 3. It is also observed that all 3 member households had kids, while all 1 and 2 member households did not have kids. 
+
+
+## Education Level of Participants
+
+The code chunk below plots a count plot for participants education level. 
 
 ```{r}
-ggplot(data=participants, aes(y=educationLevel, x=age)) +
-  geom_boxplot() +
+participants %>% count(educationLevel) %>% 
+  ggplot(aes(x=educationLevel, y=n)) + 
+  geom_col(fill="#00BFC4") +
+  geom_text(aes(label = n), size = 3, position = position_stack(vjust = 0.5)) +
+  labs(x="Education Level", y="Count", title="Education Level Count Plot") +
+  theme_minimal()
+```
+
+The bar chart above shows that high school or college graduates make up the largest proportion of the participants, while people of low education level make up the smallest proportion of participants. With the exception of low education level, there is a decreasing trend observed in terms of more senior educations levels. 
+
+
+## Education Level versus Age
+
+The following chunk code plots box plots to access whether age differs by education levels of participants. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot, and is represented by a red dot.
+
+```{r}
+ggplot(data=participants, aes(x=educationLevel, y=age)) +
+  geom_boxplot(notch = TRUE) +
   stat_summary(geom = "point",
                fun="mean",
                colour="red",
                size=4) +
+  labs(y="Age", x="Education Level", title="Education Level versus Age") +
   theme_minimal()
 ```
 
-Age vs Kids Histogram
+From the plot it can be seen that there is no discernible relationship between education levels and age.
+
+## Education Level versus Kids
+
+The following code chunk below plots a stacked bar chart of the frequency of education level split into those having kids and those who do not have kids.
 
 ```{r}
-p <- participants[,-3]
-
-ggplot(participants, aes(x= age, fill = haveKids)) +
-  geom_histogram(data=p, fill = "grey",
-                 alpha = .5, bins = 20) +
-  geom_histogram(colour = "black", bins=20) +
-  facet_wrap(~ haveKids) +
-  guides(fill = "none") +
+participants %>%
+  group_by(educationLevel, haveKids) %>%
+  summarise(n = n()) %>%
+  mutate(freq = round(n / sum(n),3)) %>%
+  ggplot(aes(fill=haveKids, x=educationLevel, y=freq)) + 
+  geom_col() +
+  geom_text(aes(label = freq), size = 3, position = position_stack(vjust = 0.5)) +
+  labs(x="Education Level", y="Frequency",
+       title = "Education Level versus Kids", fill = "Have Kids?") +
   theme_minimal()
 ```
 
-Joviality vs Kids boxplot
+From the bar chart it can be seen that the proportion of those who have kids reduces with higher education levels. Participants with Low education level have the highest proportion of kids. While those with bachelors have the lowest proportion of kids, this proportion is close to that of the graduate group.
+
+
+## Household Size versus Education for Participants without Kids
+
+Th code chunk takes a subset of the participants data where haveKids is FALSE, to study the impact of education on household sizes. This is done as we have already established that all 3 person households have kids and the previous segment has studied the impact of education level on having kids. Here we aim to study if education levels has an impact on single person households.
 
 ```{r}
-ggplot(data=participants, aes(y=haveKids, x=joviality)) +
-  geom_boxplot() +
+subset(participants, participants$haveKids == FALSE) %>%
+  group_by(educationLevel, householdSize) %>%
+  summarise(n = n()) %>%
+  mutate(freq = round(n / sum(n),3)) %>%
+  ggplot(aes(fill=householdSize, x=educationLevel, y=freq)) + 
+    geom_col() +
+    geom_text(aes(label = freq), size = 3, position = position_stack(vjust = 0.5)) +
+    labs(x="Education Level", y="Frequency",
+         title = "Education Level versus Household Size (No Kids)", fill = "Household Size") +
+    theme_minimal()
+```
+
+From the plot above it is evident that a majority of participants with low education level form single households, while the split is more even for the other higher education levels.
+
+
+## Education Level and Joviality
+
+The following chunk code plots box plots to access whether education levels influence the joviality of participants. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot, and is represented by a red dot.
+
+```{r}
+#	Education level vs joviality
+ggplot(data=participants, aes(x=educationLevel, y=joviality)) +
+  geom_boxplot(notch=TRUE) +
   stat_summary(geom = "point",
                fun="mean",
                colour="red",
                size=4) +
-  coord_flip() +
-  ylab("Have Kids") +
-  xlab("Joviality") +
+  labs(y="Joviality", x="Education Level", title="Education Level versus Joviality") +
   theme_minimal()
 ```
 
-Joviality vs Activity
+From the plot it is observed that both median and mean of joviality of the participants increases with higher education levels. The largest difference between mean and median is seen in the low education level group, where the mean is much higher than the median, indicating that this group has outliers who have a higher joviality in comparison to the others in the same education level.
+
+## Interest Group Count
+
+The following chunk code plots bar charts sorted in ascending order of count for interest groups. This will allow us to identify the least and most popular interest group among the general population.
 
 ```{r}
-ggplot(data=participants, aes(x= reorder(interestGroup, joviality, FUN =median), 
+participants %>% count(interestGroup) %>% 
+  ggplot(aes(x=reorder(interestGroup, n, fun=sum), y=n)) + 
+  geom_col(fill="#00BFC4") +
+  geom_text(aes(label = n), size = 3, position = position_stack(vjust = 0.5)) +
+  geom_hline(aes(yintercept = mean(n), color = "mean")) +
+  labs(x="Interest Group", y="Count", title="Interest Group Count Plot", 
+       color = "") +
+  theme_minimal()
+```
+
+From the chart above it can be seen that the least popular interest group is E and the most popular is J.Interest groups B, D, E and I are also below mean participant count for all interest groups.
+
+
+## Interest Group Impact on Joviality
+
+The following chunk code plots box plots to study how the joviality of participants differs by interest group. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot, and is represented by a red dot.
+
+```{r}
+ggplot(data=participants, aes(x= reorder(interestGroup, joviality, median), 
                               y=joviality)) +
-  geom_boxplot() +
+  geom_boxplot(notch = TRUE) +
   stat_summary(geom = "point",
                fun="mean",
                colour="red",
@@ -97,22 +229,86 @@ ggplot(data=participants, aes(x= reorder(interestGroup, joviality, FUN =median),
   theme_minimal()
 ```
 
-Activity Favoured by Those with and without Kids (Stacked %)
+From the above plot, it is observed that participants in interest group H have the lowest median and mean joviality while those in interest group E had the highest median and mean joviality. Interest group G had the largest difference between median and mean, with the mean being much higher. This indicates that there were participants in interest group G that had significantly higher joviality compared to the rest of the participants in that group.
+
+
+## Influence of Kids on Interest Group
+
+The code chunk below plots a bar chart depicting the proportion of participants with and without kids in each interest group with the intend of studying which interest group applies to each group. The output graph is however not sorted by proportion of interest group due to certain limitations and is an area for future improvement.
 
 ```{r}
-ggplot(participants, aes(fill=haveKids, x=interestGroup)) + 
-    geom_bar(position="fill") +
+participants %>%
+  group_by(interestGroup, haveKids) %>%
+  summarise(n = n()) %>%
+  mutate(freq = round(n / sum(n),3)) %>%
+  ggplot(aes(fill=haveKids, x= interestGroup, y=freq)) + 
+  geom_col() +
+  geom_text(aes(label = freq), size = 3, position = position_stack(vjust = 0.5)) +
+  labs(x="Interest Group", y="Frequency",
+       title = "Interest Group versus Kids", fill = "Have Kids?") +
+  theme_minimal() 
+```
+
+From the above output it is observed that interest group D is most appealing to participants who have kids, while interest group A is most appealing to those without kids.
+
+
+##	Influence of Age on Interest Group
+
+The following chunk code plots box plots to study how the appeal of interest groups differs by age. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot, and is represented by a red dot.
+
+```{r}
+ggplot(data=participants, aes(x=reorder(interestGroup, age, median), y=age)) +
+  geom_boxplot(notch = TRUE) +
+  stat_summary(geom = "point",
+               fun="mean",
+               colour="red",
+               size=4) +
+  labs(x="Interest Group", y="Age",
+       title = "Interest Group vs Age") +
   theme_minimal()
 ```
 
-Activity Favoured by Those with and without Kids (Stacked Count)
+From the box plot it is seen that interest group E has lowest median age, indicating that it appeals more to the younger participants. Interest group D has the highest median age, indicating that it appeals more to the older participants. Visually it seems that interest group J has the widest appeal across age group, based on it's wide IQR, while the inverse seems true for interest group H. Further study is needed to acertain this.
+
+
+## Influence of Kids on Joviality
+
+The following chunk code plots box plots to study how the having kids influences joviality. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot, and is represented by a red dot.
 
 ```{r}
-ggplot(data=participants, aes(x=interestGroup, fill = haveKids)) +
-  geom_bar() +
+ggplot(data=participants, aes(x=haveKids, y=joviality)) +
+  geom_boxplot(notch = TRUE) +
+  stat_summary(geom = "point",
+               fun="mean",
+               colour="red",
+               size=4) +
+  labs(x="Have Kids", y="Joviality",
+       title = "Kids vs Joviality") +
+  theme_minimal()
+
+```
+
+From the output above it is observed that participants with kids have a higher joviality than those who do not.
+
+
+## Household Size Influence on Joviality
+
+The following chunk code plots box plots to study how household size influences joviality. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot, and is represented by a red dot.
+
+```{r}
+ggplot(participants,aes(x=householdSize, y=joviality)) +
+  geom_boxplot(notch = TRUE) +
+  stat_summary(geom = "point",
+               fun="mean",
+               colour="red",
+               size=4) +
+  labs(x="Household Size", y="Joviality",
+       title = "Household Size vs Joviality") +
   theme_minimal()
 ```
 
+The above chart shows that participants in single households have the lowest mean and median joviality. Those of participants in household sizes of 2 and 3 are similar. 
 
+# Conclusion
 
-
+From the above analysis, it can be concluded that the joviality of participants is influenced by whether they have kids or not, their education levels, size of their households. Choice of interest group is influenced by the participants age and whether their have a kid or not. Education levels also seem to influence the household size of participants and likelihood of them having kids.
