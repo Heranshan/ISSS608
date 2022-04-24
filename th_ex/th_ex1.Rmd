@@ -285,7 +285,8 @@ participants %>%
     geom_tile() +
     geom_text(aes(label = freq)) +
     scale_fill_continuous(low = "red", high = "aquamarine") +
-    labs(y='Interest Group', x='Education Level', color ='Freq') +
+    labs(y='Interest Group', x='Education Level', color ='Freq', 
+         title = 'Education Level vs Interest Group') +
     theme_minimal()
 ```
 
