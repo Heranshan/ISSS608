@@ -271,6 +271,26 @@ ggplot(data=participants, aes(x=reorder(interestGroup, age, median), y=age)) +
 From the box plot it is seen that interest group E has lowest median age, indicating that it appeals more to the younger participants. Interest group D has the highest median age, indicating that it appeals more to the older participants. Visually it seems that interest group J has the widest appeal across age group, based on it's wide IQR, while the inverse seems true for interest group H. Further study is needed to acertain this.
 
 
+## Influence of Education Level on Choice of Interest Group
+
+The chunk code below plots a heat map to show the frequency relationship between education levels and interest group choice.
+
+```{r}
+participants %>%
+  group_by(educationLevel, interestGroup) %>%
+  summarise(n = n()) %>%
+  mutate(freq = round(n / sum(n),2)) %>%
+  ggplot(aes(y=interestGroup, x=educationLevel, fill=freq)) +
+    geom_tile() +
+    geom_text(aes(label = freq)) +
+    scale_fill_continuous(low = "red", high = "aquamarine") +
+    labs(y='Interest Group', x='Education Level', color ='Freq') +
+    theme_minimal()
+```
+
+The heatmap above allows us to see which interest group appeals to participants in different education levels. Participants of low education level had the highest preference for interest group C and G, while having the lowest preference for interest group D. Participants of high school or college education level preferred interest group F and A. Their preference did not differ much across the other interest groups. For participants with a bachelor education level, there was a strong preference for interest group H and J, while a very low preference was observed for interest group E. Graduate participants had a strong preference for interest group G, while showing the lowest preference for interest group A.
+
+
 ## Influence of Kids on Joviality
 
 The following chunk code plots box plots to study how the having kids influences joviality. Notches are added to the box plot to help visually assess whether the medians of distributions differ. Mean of each group is also added to the plot, and is represented by a red dot.
@@ -311,4 +331,4 @@ The above chart shows that participants in single households have the lowest mea
 
 # Conclusion
 
-From the above analysis, it can be concluded that the joviality of participants is influenced by whether they have kids or not, their education levels, size of their households. Choice of interest group is influenced by the participants age and whether their have a kid or not. Education levels also seem to influence the household size of participants and likelihood of them having kids.
+From the above analysis, it can be concluded that the joviality of participants is influenced by whether they have kids or not, their education levels, size of their households. Choice of interest group is influenced by the participants age, education level and whether they have a kid or not. Education levels also seem to influence the household size of participants and likelihood of them having kids.
