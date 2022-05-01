@@ -1,0 +1,337 @@
+---
+title: "Take-home Exercise 2"
+description: |
+  In this take home exercise I will explore the take home exercise 1 of my classmate [Shachi Anirudha Raodeo](https://visualanalytics.netlify.app/th_ex/th_ex1.html).
+author:
+  - name: Heranshan Subramaniam
+    url: https://www.linkedin.com/in/heranshan/
+    affiliation: School of Computing and Information Systems
+    affiliation_url: https://scis.smu.edu.sg/
+date: "`r Sys.Date()`"
+output: distill::distill_article
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview
+
+In this take-home exercise, I will:
+
+- Select one of the Take-home Exercise 1 prepared by my classmate,
+- Critic the submission in terms of clarity and aesthetics, and
+- Remake the original design by using the data visualization principles and best practice learnt in Lesson 1 and 2.
+
+# Getting Started
+
+The required packages will be called with the following code chunk:
+
+```{r}
+packages = c('tidyverse','ggplot2', 'ggpubr')
+for (p in packages){
+  if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+  library(p, character.only = T)
+}
+
+```
+
+# Importing Data
+
+The code chunk below will import *Participants.csv* from the data folder into R by using [`read_csv()`](https://readr.tidyverse.org/reference/read_delim.html) of [**readr**](https://readr.tidyverse.org/) package and save it as a tibble data frame called *part_data*.
+
+```{r}
+
+participants_data <- read_csv("data/Participants.csv")
+
+```
+
+# Data Preperation
+
+Rebuild data frame as done by Yanmu.
+
+```{r}
+
+participants_data$age <- as.factor(participants_data$age)
+levels(participants_data$age)
+
+one <- c("18", "19", "20")
+two <- c("21", "22", "23", "24", "25", "26", "27", "28", "29", "30" )
+three <- c("31", "32", "33", "34", "35", "36", "37", "38", "39", "40")
+four <- c( "41", "42", "43", "44", "45", "46", "47", "48", "49", "50")
+five <-  c( "51", "52", "53", "54", "55", "56", "57", "58", "59", "60")
+
+
+participants_data_mod <- participants_data %>%
+  mutate(age_modified = case_when(
+    age %in% one ~ "<=20",
+    age %in% two ~ "20's",
+    age %in% three ~ "30's",
+    age %in% four ~ "40's",
+    age %in% five ~ "50+")) %>%
+  select(-age)
+
+participants_data_mod[order(participants_data_mod$age_modified), ]
+```
+
+
+# Data Visualization and Insights
+
+## Graph 1: Distribution of Joviality
+
+### Original Graph
+
+```{r}
+ggplot(data=participants_data,
+aes(x = joviality)) +
+geom_histogram(bins=20,
+boundary = 50,
+color="black",
+fill="light blue") +
+coord_cartesian(xlim=c(0.01,1)) +
+labs(
+    title = "Distribution of Joviality",
+    caption = "demographic information, Ohio USA"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 1),
+    plot.caption = element_text(hjust = 0)
+  )
+```
+
+### Comments
+
+Pros:
+
+1) Graph is clear and aesthetically pleasing
+2) Graph has understandable title and axis labels
+3) Appropirate bin size selected
+
+Possible areas for improvement:
+
+1) Y axis can be placed horizontally to enhance readability
+2) Axis can be renamed to title case, instead of using data frame column header 
+3) Additional statistic could be added to provide reader with more information
+
+### Revised Graph
+
+```{r}
+joviality_stat <- participants_data %>%
+  summarize(j_median = median(joviality),
+            j_mean = mean(joviality))
+
+ggplot(data=participants_data,
+aes(x = joviality)) +
+geom_histogram(bins=20,
+boundary = 50,
+color="black",
+fill="light blue") +
+  geom_vline(data= joviality_stat,
+             aes(xintercept = j_median, color= 'Median'),
+             linetype= 'dashed',
+             size= .4) +
+  geom_vline(data= joviality_stat,
+             aes(xintercept = j_mean, color= 'Mean'),
+             linetype= 'dashed',
+             size= .4) +
+  scale_color_manual(name= 'Statistics', 
+                     values = c(Median= 'Blue', Mean= 'Red')) +
+coord_cartesian(xlim=c(0.01,1)) +
+labs(x = "Joviality", y = "Count",
+    title = "Distribution of Joviality",
+    caption = "demographic information, Ohio USA"
+  ) +
+  theme(
+    axis.title.y= element_text(angle=0),
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 1),
+    plot.caption = element_text(hjust = 0)
+  ) 
+```
+## Graph 2: Distribution of Age for Different Household Types
+
+### Original Graph
+
+```{r}
+ggplot(data=participants_data_mod, 
+       aes(x=age_modified, fill = educationLevel)) +
+geom_bar()+
+labs(
+    title = "Distribution of Age for different household types",
+    caption = "demographic information, Ohio USA"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 1),
+    plot.caption = element_text(hjust = 0)
+  )
+```
+### Comments
+
+Pros:
+
+1) Graph has understandable title and axis labels
+
+Cons:
+
+1) Y axis can be placed horizontally to enhance readability
+2) Axis and legend title can be renamed to title case, instead of using data frame column header
+3) Graph is too cluttered with information, making it difficult for reader to interpret. Graph data can be better represented by 2 different graphs.
+4) x ticker can be removed
+5) Statistical data can be added to the bar chart to make it clearer.
+
+### Revised Graphs
+
+```{r}
+ggplot(data= participants_data_mod, 
+       aes(x= age_modified)) +
+  geom_bar(fill= "#00BFC4") +
+  geom_text(stat = 'count',
+           aes(label= paste0(stat(count), ', ', 
+                             round(stat(count)/sum(stat(count))*100, 
+                             1), '%')), vjust= -0.5, size= 2.5) +
+  labs(y= 'No. of\nResidents', x= 'Age',
+       title = "Distribution of Residents' Age") +
+  theme(axis.title.y= element_text(angle=0), axis.ticks.x= element_blank(),
+        panel.background= element_blank(), axis.line= element_line(color= 'grey'))
+
+```
+
+```{r}
+participants_data_mod %>%
+  group_by(age_modified, educationLevel) %>%
+  summarise(n = n()) %>%
+  mutate(freq = round(n / sum(n),3)) %>%
+  ggplot(aes(x=age_modified, y=freq, fill = educationLevel)) +
+   geom_col() +
+    geom_text(aes(label = freq), size = 3, position = position_stack(vjust = 0.5)) +
+    labs(x="Education Level", y="Frequency",
+         title = "Education Distribution by Age", fill = "Education Level") +
+    theme(
+    axis.title.y= element_text(angle=0), axis.ticks.x= element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 1),
+    plot.caption = element_text(hjust = 0),
+    panel.background= element_blank(), axis.line= element_line(color= 'grey')
+  ) 
+
+```
+## Graph 3: Joviality Measure by Age and Education Level
+
+### Original Graph
+
+```{r}
+ggplot(data=participants_data_mod, 
+       aes(x= joviality, 
+           y= educationLevel, fill = haveKids)) +
+     geom_col() +
+  theme_classic()+
+ labs(
+    title = "Joviality Measure",
+    caption = "demographic information, Ohio USA"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 1),
+    plot.caption = element_text(hjust = 0)
+  )+
+  facet_wrap(~age_modified)
+```
+### Comments
+
+Pros:
+
+1) Segregation by facet grid allows reader to have a deeper appreciation of the data from different groups
+
+Cons:
+
+1) Addition of 'haveKids' adds too many dimensions to the data and may confuse the reader
+2) Collectively depicting the Joviality of the various groups by using a bar chart is not accurate. A box plot should be used instead.
+3) Mean statistic can be added to the boxplot
+4) Ticks from the x axis can be removed
+5) Axis can be renamed. Y axis can be re-orientated to make it more readable
+
+### Revised Graph
+
+```{r}
+ggplot(data=participants_data_mod, 
+       aes(x= age_modified, 
+           y= joviality)) +
+     geom_boxplot() +
+  stat_summary(geom = "point",
+               fun="mean",
+               colour="red",
+               size=2) +
+  theme_classic()+
+ labs(
+    title = "Joviality Measure", y="Joviality",
+    x='Age Modified') +
+  theme(axis.title.y= element_text(angle=0), axis.ticks.x= element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 1),
+    plot.caption = element_text(hjust = 0),
+    panel.background= element_blank(), axis.line= element_line(color= 'grey'))+
+  facet_wrap(~educationLevel)
+```
+
+## Graph 4: Joviality Measure by Interest Group
+
+### Original Graph
+
+```{r}
+ggplot(data=participants_data_mod, 
+       aes(x= interestGroup, 
+           y= joviality)) +
+     geom_col() +
+  theme_classic()+
+ labs(
+    title = "Joviality Measure",
+    caption = "demographic information, Ohio USA"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 1),
+    plot.caption = element_text(hjust = 0)
+  )+
+  facet_wrap(~age_modified)
+```
+
+
+### Comments
+
+Pros:
+
+1) Segregation by facet grid allows reader to have a deeper appreciation of the data from different groups
+
+Cons:
+
+1) Collectively depicting the Joviality of the various groups by using a bar chart is not accurate. A box plot should be used instead.
+2) Mean statistic can be added to the boxplot
+3) Ticks from the x axis can be removed
+4) Axis can be renamed. Y axis can be re-orientated to make it more readable
+
+### Revised Graph
+
+```{r}
+ggplot(data=participants_data_mod, 
+       aes(x= age_modified, 
+           y= joviality)) +
+     geom_boxplot() +
+  stat_summary(geom = "point",
+               fun="mean",
+               colour="red",
+               size=2) +
+  theme_classic()+
+ labs(
+    title = "Joviality Measure", y="Joviality",
+    x='Age Modified') +
+  theme(axis.title.y= element_text(angle=0), axis.ticks.x= element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 1),
+    plot.caption = element_text(hjust = 0),
+    panel.background= element_blank(), axis.line= element_line(color= 'grey'))+
+  facet_wrap(~interestGroup)
+```
