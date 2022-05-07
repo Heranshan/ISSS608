@@ -1,0 +1,67 @@
+---
+title: "In-Class Exercise 4"
+description: |
+  Statistics
+author:
+  - name: Heranshan Subramaniam 
+    url: https://www.linkedin.com/in/heranshan/
+    affiliation: School of Computing and Information Systems
+    affiliation_url: https://scis.smu.edu.sg/
+date: "`r Sys.Date()`"
+output: distill::distill_article
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, message = FALSE,
+                      warning = FALSE, fig.retina = 3)
+```
+
+# Getting Started
+
+## Setting up R packages 
+
+To start with [ggstatsplot](https://indrajeetpatil.github.io/ggstatsplot/) and [tidyverse](https://www.tidyverse.org/) packages will be launched using library().
+
+```{r}
+packages = c('ggstatsplot','tidyverse')
+for (p in packages){
+  if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+}
+```
+
+## Importing data
+
+```{r}
+exam <- read_csv("data/exam_data.csv")
+
+```
+
+## Working with ggstatsplot
+
+### ANOVA test - bayes
+```{r fig.width=6, fig.height=8}
+set.seed(101)
+ggbetweenstats(
+  data = exam,
+  x = RACE, 
+  y = ENGLISH,
+  type = "b"
+)
+```
+
+### ANOVA test - Parametric
+```{r fig.width=6, fig.height=8}
+ggbetweenstats(
+  data = exam,
+  x = RACE, 
+  y = ENGLISH,
+  type = "p",
+  mean.ci = TRUE, 
+  pairwise.comparisons = TRUE, 
+  pairwise.display = "s",
+  p.adjust.method = "fdr",
+  messages = FALSE
+)
+```
