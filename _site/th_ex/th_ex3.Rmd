@@ -1,0 +1,348 @@
+---
+title: "Take-home Exercise 3"
+description: |
+  In this take home exercise I will explore, over the period covered by the dataset in [VAST Challenge 2022](https://vast-challenge.github.io/2022/), which businesses appear to be more prosperous and which appear to be struggling. The focus will be on the Pubs and Restaurants in the area.
+  
+author:
+  - name: Heranshan Subramaniam
+    url: https://www.linkedin.com/in/heranshan/
+    affiliation: School of Computing and Information Systems
+    affiliation_url: https://scis.smu.edu.sg/
+date: "`r Sys.Date()`"
+output: distill::distill_article
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, message = FALSE,
+                      warning = FALSE, fig.retina = 3)
+```
+
+# Overview
+
+In this take-home exercise, I will:
+
+- Do extensive data manipulation to extract out useful information 
+- Plot easy to read, interactive plots to visualize health of businesses
+
+# Getting Started
+
+The required packages will be called with the following code chunk:
+
+```{r}
+packages = c('ggiraph', 
+             'DT', 'patchwork',
+             'gganimate', 'tidyverse',
+             'readxl', 'gifski', 'gapminder',
+             'treemap', 'treemapify',
+             'rPackedBar', 'lubridate', 'ggridges')
+for (p in packages){
+  if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+  library(p,character.only = T)
+}
+```
+
+# Importing Data
+
+The code chunk below will import *TravelJournal.csv*, *Restaurants.csv* and *Pubs.csv* from the data folder into R by using [`read_csv()`](https://readr.tidyverse.org/reference/read_delim.html) of [**readr**](https://readr.tidyverse.org/) package and save it as a tibble data frame called *TravelJournal*, *Restaurants* and *Pubs* respectively.
+
+```{r, eval=FALSE}
+TravelJournal <- read_csv("data/TravelJournal.csv")
+Restaurants <- read_csv("data/Restaurants.csv")
+Pubs <- read_csv("data/Pubs.csv")
+
+```
+
+# Data Cleaning and Manipulation
+
+Extensive data cleaning and manipulation was done below to combine the 3 datasets.
+
+```{r, eval=FALSE}
+
+TravelJournal$difference <- TravelJournal$startingBalance - TravelJournal$endingBalance
+
+keep <- c("participantId", "travelEndLocationId", "purpose", "checkInTime", "difference")
+
+TravelJournal <- TravelJournal[, keep]
+
+
+TravelJournal <- subset(TravelJournal, purpose != "Coming Back From Restaurant" &
+                                   purpose != "Going Back to Home")
+
+
+names(TravelJournal)[names(TravelJournal) == "travelEndLocationId"] = "LocationId"
+
+names(Pubs)[names(Pubs) == "pubId"] = "LocationId"
+
+names(Restaurants)[names(Restaurants) == "restaurantId"] = "LocationId"
+
+
+Pubs$type <- "Pub"
+
+Restaurants$type <- "Restaurant"
+
+
+PubsMerged <- merge(TravelJournal, Pubs, by="LocationId")
+
+RestaurantsMerged <- merge(TravelJournal, Restaurants, by="LocationId")
+
+
+PubsMerged$foodCost <- "NA"
+
+RestaurantsMerged$hourlyCost <- "NA"
+
+
+TravelJournalMerged <- rbind(PubsMerged, RestaurantsMerged)
+
+
+TravelJournalMerged$LocationId <- as.character(TravelJournalMerged$LocationId)
+TravelJournalMerged$participantId <- as.character(TravelJournalMerged$participantId)
+TravelJournalMerged$buildingId <- as.character(TravelJournalMerged$buildingId)
+
+TravelJournalMerged$monthYear <- floor_date(TravelJournalMerged$checkInTime, "month")
+
+LocationG1 <- TravelJournalMerged %>%                      
+  group_by(LocationId, monthYear) %>% tally() %>%
+  as.data.frame()
+
+LocationG2 <- TravelJournalMerged %>%                      
+  group_by(LocationId, monthYear) %>%
+  dplyr::summarize(Spend = sum(difference)) %>% 
+  as.data.frame()
+
+LocationG1$Spend <- LocationG2$Spend
+
+```
+
+
+# Data Visualization and Insights
+
+## Graph 1: Business Revenue Over Time
+
+```{r, eval=FALSE}
+businessMonthlyRev <- TravelJournalMerged %>%                        
+  group_by(type, monthYear) %>% 
+  dplyr::summarize(Spend = sum(difference)) %>% 
+  as.data.frame()
+
+businessMonthlyRev$Spend <- abs(businessMonthlyRev$Spend)
+
+```
+```{r, include=FALSE}
+businessMonthlyRev <- read_csv("data/businessMonthlyRev.csv")
+
+```
+
+```{r}
+ggplot(data=businessMonthlyRev,
+       aes(x = monthYear, y=Spend, height=Spend, color = type)) +
+  geom_line() +
+  labs(title = "Business Revenue Over Time",
+       x = "Time Period", y= "Revenue", color = "Type") +
+  theme(axis.ticks.x = element_blank(),
+        panel.background= element_blank(), 
+        legend.background = element_blank(),
+        axis.line= element_line(color= 'grey'),
+        panel.grid.major.y = element_line(size= 0.2, color = "grey"),
+        axis.title.y= element_text(angle=0),
+        plot.title = element_text(hjust=0.5)
+        )
+```
+
+### Insights
+
+Both the revenue for Pubs and Restaurants are on a decline, though the decline for Pubs is much more severe. Pubs experienced a huge initial decrease in the early part of the observation period.
+
+
+## Graph 2: Overall Revenue and Customer Change
+
+The following interactive plot shows the percentage change in revenue and customer count between the start and end of the observation period. Tooltips show the Location Id, type of business, percentage change in revenue and percentage change in customer count. Both graphs are also linked.
+
+
+```{r, eval=FALSE}
+
+plotData <- subset(LocationG1, monthYear == as.POSIXct("2022-03-01", tz="UTC") |
+                        monthYear == as.POSIXct("2023-05-01", tz="UTC"))
+
+#plotData <- plotData[, -which(names(plotData) == "n")]
+
+plotData <- reshape(plotData, direction = "wide", idvar = "LocationId", 
+                    timevar = "monthYear")
+
+plotData$perChangeN <- round(((plotData$`n.2023-05-01`- plotData$`n.2022-03-01`)
+                              /plotData$`n.2022-03-01`)*100, 1)
+
+plotData$perChangeIncome <- round(((plotData$`Spend.2023-05-01`- 
+                                      plotData$`Spend.2022-03-01`)/
+                                     plotData$`Spend.2022-03-01`)*100,1)
+
+keep <- c("LocationId", "perChangeN", "perChangeIncome")
+
+#plotData <- plotData[, keep]
+
+plotData$IncomeType <- ifelse(plotData$perChangeIncome < 0, "below", "above")
+
+plotData$NType <- ifelse(plotData$perChangeN < 0, "below", "above")
+
+type <- distinct(TravelJournalMerged %>%
+   select(LocationId, type))
+            
+plotData <- merge(x = plotData, y = type, by = "LocationId", all.x=TRUE)
+
+plotData$tooltip <- c(paste0(
+  "Location ", plotData$LocationId,
+  "\n Type = ", plotData$type,
+  "\n Rev Change = ", plotData$perChangeIncome, "%",
+  "\n Cust Change = ", plotData$perChangeN, "%"))
+```
+
+```{r, include=FALSE}
+plotData <- read_csv("data/plotData.csv")
+```
+
+```{r}
+p1 <- ggplot(plotData, aes(y=reorder(LocationId, perChangeIncome), 
+                           x=perChangeIncome, label=perChangeIncome)) + 
+  geom_point_interactive(stat='identity', aes(col=IncomeType, 
+                                              data_id = LocationId, 
+                                              tooltip = tooltip), size=6, 
+                         show.legend = FALSE)  +
+  scale_color_manual(values = c("above"="#00ba38", "below"="#f8766d")) +
+  geom_text(color="white", size=2) +
+  labs(title="Revenue Change", x = '% Change in Revenue', y = 'Location ID' ) + 
+  xlim(-90, 30) +
+  theme(axis.ticks.y= element_blank(), axis.ticks.x= element_line(color= 'grey'),
+        panel.background= element_blank(), axis.line= element_line(color= 'grey'),
+        panel.grid.major = element_line(size= 0.2, color = "grey"),
+        plot.title = element_text(hjust=0.5))
+
+
+p2 <- ggplot(plotData, aes(y=reorder(LocationId, perChangeN), x=perChangeN, 
+                           label=perChangeN)) + 
+  geom_point_interactive(stat='identity', aes(col=NType, data_id = LocationId, 
+                                              tooltip = tooltip), size=6, 
+                         show.legend = FALSE)  +
+  scale_color_manual(values = c("above"="#00ba38", "below"="#f8766d")) +
+  geom_text(color="white", size=2) +
+  labs(title="Customer Count Change", x = '% Change in Customer Count', y = '' ) + 
+  xlim(-90, 30) +
+  theme(axis.ticks.y= element_blank(), axis.ticks.x= element_line(color= 'grey'),
+        panel.background= element_blank(), axis.line= element_line(color= 'grey'),
+        panel.grid.major = element_line(size= 0.2, color = "grey"),
+        plot.title = element_text(hjust=0.5))
+
+girafe(code = print(p1 + p2),
+       width_svg = 6,
+       height_svg = 7,
+       options = list(
+         opts_hover(css = "fill:orange;stroke:gray;r:5pt;"),
+         opts_hover_inv(css = "opacity:0.2;")
+         
+       )
+)
+```
+
+### Insights
+
+The chart above shows that all businesses had a decline in revenue at the end of the observation period, in comparison to thier revenue at the start of the observation. Changes in customer count was closely related to changes in revenue.
+
+
+## Graph 3: Overall Revenue and Customer Change (By Type)
+
+The following interactive plot shows the percentage change in revenue and customer count between the start and end of the observation period. Tooltips show the type of business. Both graphs are also linked and hovering over selects all the businesses of the same type.
+
+```{r}
+p1 <- ggplot(plotData, aes(y=reorder(LocationId, perChangeIncome), 
+                           x=perChangeIncome, label=perChangeIncome)) + 
+  geom_point_interactive(stat='identity', aes(col=IncomeType, data_id = type, 
+                                              tooltip = type), size=6, 
+                         show.legend = FALSE)  +
+  scale_color_manual(values = c("above"="#00ba38", "below"="#f8766d")) +
+  geom_text(color="white", size=2) +
+  labs(title="Revenue Change", x = '% Change in Revenue', y = 'Location ID' ) + 
+  xlim(-90, 30) +
+  theme(axis.ticks.y= element_blank(), axis.ticks.x= element_line(color= 'grey'),
+        panel.background= element_blank(), axis.line= element_line(color= 'grey'),
+        panel.grid.major = element_line(size= 0.2, color = "grey"),
+        plot.title = element_text(hjust=0.5))
+
+
+p2 <- ggplot(plotData, aes(y=reorder(LocationId, perChangeN), x=perChangeN, 
+                           label=perChangeN)) + 
+  geom_point_interactive(stat='identity', aes(col=NType, data_id = type, 
+                                              tooltip = type), size=6, 
+                         show.legend = FALSE)  +
+  scale_color_manual(values = c("above"="#00ba38", "below"="#f8766d")) +
+  geom_text(color="white", size=2) +
+  labs(title="Customer Count Change", x = '% Change in Customer Count', y = '' ) + 
+  xlim(-90, 30) +
+  theme(axis.ticks.y= element_blank(), axis.ticks.x= element_line(color= 'grey'),
+        panel.background= element_blank(), axis.line= element_line(color= 'grey'),
+        panel.grid.major = element_line(size= 0.2, color = "grey"),
+        plot.title = element_text(hjust=0.5))
+
+girafe(code = print(p1 + p2),
+       width_svg = 6,
+       height_svg = 7,
+       options = list(
+         opts_hover(css = "fill:orange;stroke:gray;r:5pt;"),
+         opts_hover_inv(css = "opacity:0.2;")
+         
+       )
+)
+```
+
+
+### Insights
+
+It is observed that all pubs performed significantly worse than the restaurants, indicating that there may have been a higher propensity by participants for restaurants.
+
+
+## Graph 4: Revenue Change Animation Over Time
+
+The following animation shows the percentage change in revenue per month, using the first observation month as the baseline.
+
+```{r, eval=FALSE}
+ChangeTime <- LocationG1
+
+
+ChangeTime <- ChangeTime %>% 
+  group_by(LocationId) %>% 
+  mutate(PercChangeRev = round(((Spend - Spend[1])/Spend[1])*100,1), 
+         PercChangeRev = replace(PercChangeRev, row_number() == 0, NA))
+
+ChangeTime <- ChangeTime %>% 
+  group_by(LocationId) %>% 
+  mutate(PercChangeN = round(((n - n[1])/n[1])*100,1), 
+         PercChangeN = replace(PercChangeN, row_number() == 0, NA))
+
+ChangeTime$ChangeRevType <- ifelse(ChangeTime$PercChangeRev > 0, "above","below")
+
+```
+
+```{r, include=FALSE}
+ChangeTime <- read_csv("data/ChangeTime.csv")
+
+```
+
+```{r}
+ggplot(ChangeTime, aes(y=reorder(LocationId, PercChangeRev), 
+                       x=PercChangeRev, label=PercChangeRev)) + 
+  geom_point(stat='identity', size=6, show.legend = FALSE)  +
+  scale_color_manual(values = c("above"="#00ba38", "below"="#f8766d")) +
+  geom_text(color="white", size=0) +
+  labs(title="Revenue Change: {(frame_along)}", x = '% Change in Revenue', y = 'Location ID' ) + 
+  xlim(-90, 30) +
+  theme(axis.ticks.y= element_blank(), axis.ticks.x= element_line(color= 'grey'),
+        panel.background= element_blank(), axis.line= element_line(color= 'grey'),
+        panel.grid.major = element_line(size= 0.2, color = "grey"),
+        plot.title = element_text(hjust=0.5),
+        axis.title.y= element_text(angle=0)) +
+  transition_reveal(monthYear) +
+  ease_aes('linear')
+```
+
+### Insights
+
+There were period of times where some restaurants had positive growths, though in the end all businesses had negative outcomes. There was a negative shift of all Location revenue towards the end of the observation period. Location 1803 showed large swing in revenue changes.

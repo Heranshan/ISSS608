@@ -1,0 +1,129 @@
+"LocationId","n.2022-03-01","Spend.2022-03-01","n.2023-05-01","Spend.2023-05-01","perChangeN","perChangeIncome","IncomeType","NType","type","tooltip"
+"1342",5410,102581.288289046,1964,36417.6640840732,-63.7,-64.5,"below","below","Pub","Location 1342
+ Type = Pub
+ Rev Change = -64.5%
+ Cust Change = -63.7%"
+"1343",4011,65337.1339803089,1306,20778.9268127372,-67.4,-68.2,"below","below","Pub","Location 1343
+ Type = Pub
+ Rev Change = -68.2%
+ Cust Change = -67.4%"
+"1344",6616,103509.256649012,2178,32173.7084929495,-67.1,-68.9,"below","below","Pub","Location 1344
+ Type = Pub
+ Rev Change = -68.9%
+ Cust Change = -67.1%"
+"1345",1735,8148.27761827115,1369,6429.39023597394,-21.1,-21.1,"below","below","Restaurant","Location 1345
+ Type = Restaurant
+ Rev Change = -21.1%
+ Cust Change = -21.1%"
+"1346",394,2304.25214317458,348,2035.22778128092,-11.7,-11.7,"below","below","Restaurant","Location 1346
+ Type = Restaurant
+ Rev Change = -11.7%
+ Cust Change = -11.7%"
+"1347",697,3077.10956414007,513,2264.78795753736,-26.4,-26.4,"below","below","Restaurant","Location 1347
+ Type = Restaurant
+ Rev Change = -26.4%
+ Cust Change = -26.4%"
+"1348",622,2633.20558156261,518,2192.92683480591,-16.7,-16.7,"below","below","Restaurant","Location 1348
+ Type = Restaurant
+ Rev Change = -16.7%
+ Cust Change = -16.7%"
+"1349",384,1832.79614965105,285,1360.27839231878,-25.8,-25.8,"below","below","Restaurant","Location 1349
+ Type = Restaurant
+ Rev Change = -25.8%
+ Cust Change = -25.8%"
+"1798",3524,61572.0165435221,1316,22128.5898185813,-62.7,-64.1,"below","below","Pub","Location 1798
+ Type = Pub
+ Rev Change = -64.1%
+ Cust Change = -62.7%"
+"1799",3539,43519.225628643,1179,14101.2941483063,-66.7,-67.6,"below","below","Pub","Location 1799
+ Type = Pub
+ Rev Change = -67.6%
+ Cust Change = -66.7%"
+"1800",3520,57068.7790401067,1323,19688.1543692847,-62.4,-65.5,"below","below","Pub","Location 1800
+ Type = Pub
+ Rev Change = -65.5%
+ Cust Change = -62.4%"
+"1801",3718,20484.3170250952,2548,14038.2032759388,-31.5,-31.5,"below","below","Restaurant","Location 1801
+ Type = Restaurant
+ Rev Change = -31.5%
+ Cust Change = -31.5%"
+"1802",1325,6734.66245914221,879,4467.74966157479,-33.7,-33.7,"below","below","Restaurant","Location 1802
+ Type = Restaurant
+ Rev Change = -33.7%
+ Cust Change = -33.7%"
+"1803",904,3934.47442802797,637,2772.41173744889,-29.5,-29.5,"below","below","Restaurant","Location 1803
+ Type = Restaurant
+ Rev Change = -29.5%
+ Cust Change = -29.5%"
+"1804",980,5788.26687435419,762,4507.25648923394,-22.2,-22.1,"below","below","Restaurant","Location 1804
+ Type = Restaurant
+ Rev Change = -22.1%
+ Cust Change = -22.2%"
+"1805",2834,15847.2485461641,2066,11556.30691541,-27.1,-27.1,"below","below","Restaurant","Location 1805
+ Type = Restaurant
+ Rev Change = -27.1%
+ Cust Change = -27.1%"
+"442",2665,35115.6834497731,914,11706.0292885275,-65.7,-66.7,"below","below","Pub","Location 442
+ Type = Pub
+ Rev Change = -66.7%
+ Cust Change = -65.7%"
+"443",2684,30749.1211925436,865,9276.93764271451,-67.8,-69.8,"below","below","Pub","Location 443
+ Type = Pub
+ Rev Change = -69.8%
+ Cust Change = -67.8%"
+"444",1756,31023.8575482915,688,11957.9583904168,-60.8,-61.5,"below","below","Pub","Location 444
+ Type = Pub
+ Rev Change = -61.5%
+ Cust Change = -60.8%"
+"445",532,2738.79252268463,442,2275.46296057647,-16.9,-16.9,"below","below","Restaurant","Location 445
+ Type = Restaurant
+ Rev Change = -16.9%
+ Cust Change = -16.9%"
+"446",1316,5492.12195507464,930,3881.21080411658,-29.3,-29.3,"below","below","Restaurant","Location 446
+ Type = Restaurant
+ Rev Change = -29.3%
+ Cust Change = -29.3%"
+"447",2190,12864.409488001,1850,10867.6936826349,-15.5,-15.5,"below","below","Restaurant","Location 447
+ Type = Restaurant
+ Rev Change = -15.5%
+ Cust Change = -15.5%"
+"448",2714,11726.9049001163,1734,7058.18202341195,-36.1,-39.8,"below","below","Restaurant","Location 448
+ Type = Restaurant
+ Rev Change = -39.8%
+ Cust Change = -36.1%"
+"449",2816,14388.7517881446,2177,11131.4906960374,-22.7,-22.6,"below","below","Restaurant","Location 449
+ Type = Restaurant
+ Rev Change = -22.6%
+ Cust Change = -22.7%"
+"892",3038,55681.4414477346,972,16654.2056244673,-68,-70.1,"below","below","Pub","Location 892
+ Type = Pub
+ Rev Change = -70.1%
+ Cust Change = -68%"
+"893",2930,65740.531743971,981,20702.4593454439,-66.5,-68.5,"below","below","Pub","Location 893
+ Type = Pub
+ Rev Change = -68.5%
+ Cust Change = -66.5%"
+"894",2448,46504.8827157991,789,14327.1706830864,-67.8,-69.2,"below","below","Pub","Location 894
+ Type = Pub
+ Rev Change = -69.2%
+ Cust Change = -67.8%"
+"895",2836,12566.7811544653,1520,6746.21725013689,-46.4,-46.3,"below","below","Restaurant","Location 895
+ Type = Restaurant
+ Rev Change = -46.3%
+ Cust Change = -46.4%"
+"896",1375,8055.74517978327,1135,6649.65147567619,-17.5,-17.5,"below","below","Restaurant","Location 896
+ Type = Restaurant
+ Rev Change = -17.5%
+ Cust Change = -17.5%"
+"897",1927,11083.8935957958,1666,9596.55971111702,-13.5,-13.4,"below","below","Restaurant","Location 897
+ Type = Restaurant
+ Rev Change = -13.4%
+ Cust Change = -13.5%"
+"898",915,3857.93944986687,698,2942.99643279437,-23.7,-23.7,"below","below","Restaurant","Location 898
+ Type = Restaurant
+ Rev Change = -23.7%
+ Cust Change = -23.7%"
+"899",2427,13708.1235219138,1526,8619.11680858821,-37.1,-37.1,"below","below","Restaurant","Location 899
+ Type = Restaurant
+ Rev Change = -37.1%
+ Cust Change = -37.1%"
