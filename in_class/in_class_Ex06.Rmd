@@ -1,0 +1,189 @@
+---
+title: "In-Class Exercise 6"
+description: |
+  GeoSpatial Plots
+author:
+  - name: Heranshan Subramaniam 
+    url: https://www.linkedin.com/in/heranshan/
+    affiliation: School of Computing and Information Systems
+    affiliation_url: https://scis.smu.edu.sg/
+
+date: "`r Sys.Date()`"
+output: distill::distill_article
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, message = FALSE,
+                      warning = FALSE, fig.retina = 3)
+```
+
+# Getting Started
+
+## Setting up R packages 
+
+
+
+```{r}
+packages = c('tidyverse','sf', 'tmap',
+             'lubridate', 'clock', 'sftime',
+             'rmarkdown')
+for (p in packages){
+  if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+}
+```
+
+## Importing data
+
+```{r}
+schools <- read_sf("data/wkt/Schools.csv",
+                options = "GEOM_POSSIBLE_NAMES=location")
+pubs <- read_sf("data/wkt/Pubs.csv",
+                options = "GEOM_POSSIBLE_NAMES=location")
+apartments <- read_sf("data/wkt/Apartments.csv",
+                options = "GEOM_POSSIBLE_NAMES=location")
+buildings <- read_sf("data/wkt/Buildings.csv",
+                options = "GEOM_POSSIBLE_NAMES=location")
+employers <- read_sf("data/wkt/Employers.csv",
+                options = "GEOM_POSSIBLE_NAMES=location")
+restaurants <- read_sf("data/wkt/Restaurants.csv",
+                options = "GEOM_POSSIBLE_NAMES=location")
+
+```
+
+
+# GeoSpatial Plots
+
+## tmap interactive
+
+```{r}
+tmap_mode("view")
+tm_shape(buildings)+
+tm_polygons(col = "grey60",
+           size = 1,
+           border.col = "black",
+           border.lwd = 1)
+```
+
+
+## tmap composite map
+
+
+```{r}
+tmap_mode("plot")
+tm_shape(buildings)+
+tm_polygons(col = "grey60",
+           size = 1,
+           border.col = "black",
+           border.lwd = 1) +
+tm_shape(employers) +
+tm_dots(col = "red", size = 0.05) +
+tm_shape(apartments) +
+tm_dots(col ='blue') +
+tm_shape(restaurants) +
+tm_dots(col ='green', size = 0.05) +
+tm_shape(pubs) +
+tm_dots(col ='yellow', size = 0.05) +
+tm_shape(schools) +
+tm_dots(col ='pink', size = 0.2)
+```
+
+## Importing Participant Status Log Data
+
+```{r, eval=FALSE}
+logs <- read_sf("data/wkt/ParticipantStatusLogs1.csv",
+                options = "GEOM_POSSIBLE_NAMES=currentLocation")
+```
+
+
+## Subsetting 
+```{r, eval=FALSE}
+logs_selected <- logs %>%
+  mutate(Timestamp = date_time_parse(timestamp,
+                                     zone = "",
+                                     format = "%Y-%m-%dT%H:%M:%S")) %>%
+  mutate(day = get_day(Timestamp)) %>%
+  filter(currentMode == "Transport")
+```
+
+```{r, eval=FALSE, echo = FALSE}
+write_rds(logs_selected,
+          "data/rds/logs_selected.rds")
+```
+
+```{r, echo=FALSE}
+logs_selected <- read_rds("data/rds/logs_selected.rds")
+```
+
+## Plot Participants Movement
+
+```{r}
+tmap_mode("plot")
+tm_shape(buildings)+
+tm_polygons(col = "grey60",
+           size = 1,
+           border.col = "black",
+           border.lwd = 1) +
+tm_shape(logs_selected) +
+tm_dots(col = "red")
+```
+
+
+## Hexogan Binning Map
+
+```{r}
+hex <- st_make_grid(buildings, 
+                    cellsize=100, 
+                    square=FALSE) %>%
+  st_sf() %>%
+  rowid_to_column('hex_id')
+plot(hex)
+```
+
+```{r}
+points_in_hex <- st_join(logs_selected, 
+                         hex, 
+                         join=st_within)
+
+points_in_hex <- st_join(logs_selected, 
+                        hex, 
+                        join=st_within) %>%
+  st_set_geometry(NULL) %>%
+  count(name='pointCount', hex_id)
+head(points_in_hex)
+
+hex_combined <- hex %>%
+  left_join(points_in_hex, 
+            by = 'hex_id') %>%
+  replace(is.na(.), 0)
+
+
+tm_shape(hex_combined %>%
+           filter(pointCount > 0))+
+  tm_fill("pointCount",
+          n = 8,
+          style = "quantile") +
+  tm_borders(alpha = 0.1)
+```
+
+## Movement Path for Participant 0
+
+```{r}
+logs_path <- logs_selected %>%
+  group_by(participantId, day) %>%
+  summarize(m = mean(Timestamp), 
+            do_union=FALSE) %>%
+  st_cast("LINESTRING")
+```
+
+```{r}
+tmap_mode("plot")
+tm_shape(buildings)+
+tm_polygons(col = "grey60",
+           size = 1,
+           border.col = "black",
+           border.lwd = 1) +
+tm_shape(subset(logs_path, logs_path$participantId ==0)) +
+tm_lines(col = "red", size = 0.05)
+```
