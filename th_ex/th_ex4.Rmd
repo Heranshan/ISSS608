@@ -1,7 +1,7 @@
 ---
 title: "Take-home Exercise 4"
 description: |
-  A new article created using the Distill format.
+  In this take home exercise I will reveal the daily routines of two selected participants.
 author:
   - name: Heranshan Subramaniam
     url: https://www.linkedin.com/in/heranshan/
@@ -472,6 +472,11 @@ plot(v2,
      main = "Typical day for Participant 758")
 ```
 
+### Comments
+
+From the visualization it can be seen that the participant is very routine in terms of their when they wake up and head to bed. However, it can be seen that their lunch time is quite erratic. Working hours is very routine as well. One interesting observation is that there are times when the participant heads out to dinner. These occurrences are few and not routine. Furthermore, the start and end of their reacreation period is also not regular, indicating that it may differ depending on the day of the week.
+
+
 # Participant 113
 
 ## Data Prep for Participant 113
@@ -844,6 +849,10 @@ plot(v3,
      scal.unit.tps = 30, 
      main = "Typical day for Participant 113")
 ```
+
+### Comments
+
+The visualization is almost identical to the previous participant. This will be discussed further in the next section.
 
 
 # Comparison
