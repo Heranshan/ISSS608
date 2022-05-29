@@ -1,0 +1,652 @@
+---
+title: "Take-home Exercise 5"
+description: |
+  In this take home exercise I will reveal the patterns of daily life throughout the city.
+author:
+  - name: Heranshan Subramaniam
+    url: https://www.linkedin.com/in/heranshan/
+    affiliation: School of Computing and Information Systems
+    affiliation_url: https://scis.smu.edu.sg/
+date: "`r Sys.Date()`"
+output: distill::distill_article
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, message = FALSE,
+                      warning = FALSE, fig.retina = 3)
+```
+
+# Overview
+ 
+In this exercise I will use visual analytic techniques to address these questions:
+
+1) Assuming the volunteers are representative of the city’s population, characterize the distinct areas of the city that you identify. 
+
+2) Where are the busiest areas in Engagement? Are there traffic bottlenecks that should be addressed?
+
+# Getting Started
+
+The required packages will be called with the following code chunk:
+
+```{r}
+packages = c('tidyverse','sf', 'tmap',
+             'lubridate', 'clock', 'sftime',
+             'rmarkdown', 'gridExtra')
+
+for (p in packages){
+  if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+  library(p,character.only = T)
+}
+```
+
+# Question 1
+
+Assuming the volunteers are representative of the city’s population, characterize the distinct areas of the city that you identify.
+
+## Import Data
+
+The *Schools*, *Pubs*, *Apartments*, *Buildings*, *Employer*, *Restaurants* and *Participants* data are imported using the code chunk below. WKT type files are imported using the `read_sf` function from the **sf** package.
+
+```{r}
+schools <- read_sf("data/wkt/Schools.csv",
+                options = "GEOM_POSSIBLE_NAMES=location")
+pubs <- read_sf("data/wkt/Pubs.csv",
+                options = "GEOM_POSSIBLE_NAMES=location")
+apartments <- read_sf("data/wkt/Apartments.csv",
+                options = "GEOM_POSSIBLE_NAMES=location")
+buildings <- read_sf("data/wkt/Buildings.csv",
+                options = "GEOM_POSSIBLE_NAMES=location")
+employers <- read_sf("data/wkt/Employers.csv",
+                options = "GEOM_POSSIBLE_NAMES=location")
+restaurants <- read_sf("data/wkt/Restaurants.csv",
+                options = "GEOM_POSSIBLE_NAMES=location")
+participants <- read.csv("data/Participants.csv")
+```
+
+## Building Composite Map
+
+The plot below will show the layout of the different building types and the locations of the different facilities throughout the town.
+
+```{r}
+tmap_mode("plot")
+
+p1 <- tm_shape(buildings)+
+tm_polygons(col = "buildingType",
+           size = 1,
+           border.col = "black",
+           border.lwd = 1) +
+  tm_layout(title = "Building Type Map", title.position = c('right','top'))
+
+p2 <- tm_shape(buildings)+
+tm_polygons(col = "white",
+           size = 1,
+           border.col = "black",
+           border.lwd = 1) +
+tm_shape(employers) +
+tm_dots(col = "red", size = 0.1) +
+tm_shape(apartments) +
+tm_dots(col ='blue', size = 0.05) +
+tm_shape(restaurants) +
+tm_dots(col ='green', size = 0.15) +
+tm_shape(pubs) +
+tm_dots(col ='yellow', size = 0.15) +
+tm_shape(schools) +
+tm_dots(col ='pink', size = 0.5) +
+  tm_layout(title = "Facilities Map", title.position = c('right','top'))
+
+tmap_arrange(p1, p2, widths = c(1))
+```
+
+### Observation:
+
+The city consists of a north-western region, a central region and a southern region. The central region is connected to the tow other regions by a single road. All three regions had a core of commercial buildings flanked by residential buildings. Most residential buildings are located at the outskirts of the three regions. All schools are also situated at the outskirts of the three regions.
+
+## Further Data Enhancement
+
+### Import Additional Data
+
+Additional data is imported from the ParticipantStatusLog to enable us to study the attributes associated with the participants and how they differ across the city. 
+
+```{r, eval=FALSE}
+ParticipantLog <- read.csv("data/ParticipantStatusLogs1.csv", 
+                           nrows = nrow(participants))
+
+keep <- c("participantId", "apartmentId", "jobId", "financialStatus", 
+          "dailyFoodBudget", "weeklyExtraBudget")
+
+ParticipantLog <- ParticipantLog[,keep]
+
+```
+
+### Merge ParticipantLog and participants dataset
+
+```{r, eval=FALSE}
+participantsModified <- merge(participants, ParticipantLog, 
+                              by = "participantId")
+```
+
+```{r, eval=FALSE, echo=FALSE}
+write_rds(participantsModified,
+          "data/rds/participantsModified.rds")
+
+```
+
+```{r, echo=FALSE}
+participantsModified <- read_rds("data/rds/participantsModified.rds")
+```
+
+### Missing Apartment Data for Participants
+
+```{r}
+sum(is.na(participantsModified$apartmentId))
+```
+
+There are 142 participants with the apartment Id not available. This is a significant amount of missing data. More investigation will be required in the future to address this issue. Fow now the NA rows will be omitted from the dataset.
+
+
+### Merge apartments and participantsModified dataset
+
+```{r}
+participantsModified <- merge(participantsModified, apartments, 
+                              by="apartmentId", all.x = TRUE)
+```
+
+### Drop NA rows for participantsModified dataset
+
+```{r}
+participantsModified <- na.omit(participantsModified)
+```
+
+### Visualization
+
+#### Compute haxegon
+
+```{r}
+tmap_mode("plot")
+
+hex <- st_make_grid(buildings, 
+                    cellsize=100, 
+                    square=FALSE) %>%
+  st_sf() %>%
+  rowid_to_column('hex_id')
+
+```
+
+
+## Plot for Joviality
+
+```{r}
+points_in_hex <- st_join(st_as_sf(participantsModified), 
+                        hex, 
+                        join=st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(hex_id) %>%
+  summarise(joviality = mean(joviality))
+  
+hex_combined <- hex %>%
+  left_join(points_in_hex, 
+            by = 'hex_id') %>%
+  replace(is.na(.), 0)
+  
+p3 <- tm_shape(hex_combined %>%
+           filter(joviality > 0))+
+  tm_fill("joviality",
+          n = 5,
+          style = "quantile") +
+  tm_borders(alpha = 0.1)
+
+p2 <- tm_shape(buildings)+
+tm_polygons(col = "white",
+           size = 1,
+           border.col = "black",
+           border.lwd = 1) +
+tm_shape(employers) +
+tm_dots(col = "red", size = 0.1) +
+tm_shape(apartments) +
+tm_dots(col ='blue', size = 0.05) +
+tm_shape(restaurants) +
+tm_dots(col ='green', size = 0.15) +
+tm_shape(pubs) +
+tm_dots(col ='yellow', size = 0.15) +
+tm_shape(schools) +
+tm_dots(col ='pink', size = 0.5) +
+  tm_layout(title = "Base Map", title.position = c('right','top'))
+
+tmap_arrange(p3, p2, nrow = 1)
+```
+### Observations
+
+It is observed that people who live close to the core region of the there distinct areas discussed earlier have a higher joviality. Those residing at the outskirts of the areas had lower joviality in general
+
+## Plot for Food Budget
+
+```{r}
+points_in_hex <- st_join(st_as_sf(participantsModified), 
+                        hex, 
+                        join=st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(hex_id) %>%
+  summarise(dailyFoodBudget = mean(dailyFoodBudget))
+  
+hex_combined <- hex %>%
+  left_join(points_in_hex, 
+            by = 'hex_id') %>%
+  replace(is.na(.), 0)
+  
+p4 <- tm_shape(hex_combined %>%
+           filter(dailyFoodBudget > 0))+
+  tm_fill("dailyFoodBudget",
+          n = 5,
+          style = "quantile") +
+  tm_borders(alpha = 0.1)
+
+tmap_arrange(p4, p2, nrow = 1)
+```
+### Observation
+
+Those at the core areas of the three areas had a higher daily food budget. Participants residing in areas which has predominantly apartments had a lower daily food budget.
+
+## Plot for Rent
+
+```{r}
+points_in_hex <- st_join(st_as_sf(participantsModified), 
+                        hex, 
+                        join=st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(hex_id) %>%
+  summarise(rentalCost = mean(as.numeric(rentalCost)))
+  
+hex_combined <- hex %>%
+  left_join(points_in_hex, 
+            by = 'hex_id') %>%
+  replace(is.na(.), 0)
+  
+p5 <- tm_shape(hex_combined %>%
+           filter(rentalCost > 0))+
+  tm_fill("rentalCost",
+          n = 8,
+          style = "quantile") +
+  tm_borders(alpha = 0.1)
+
+tmap_arrange(p5, p2, nrow = 1)
+```
+### Observation
+
+Residential rental cost was highest around the commercial areas of the three areas. Additionally it is observed that for the residential areas, the retal is high around the schools.
+
+## Plot for Age
+
+```{r}
+points_in_hex <- st_join(st_as_sf(participantsModified), 
+                        hex, 
+                        join=st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(hex_id) %>%
+  summarise(age = median(as.numeric(age)))
+  
+hex_combined <- hex %>%
+  left_join(points_in_hex, 
+            by = 'hex_id') %>%
+  replace(is.na(.), 0)
+  
+p6 <- tm_shape(hex_combined %>%
+           filter(age > 0))+
+  tm_fill("age",
+          n = 8,
+          style = "quantile") +
+  tm_borders(alpha = 0.1)
+
+tmap_arrange(p6, p2, nrow = 1)
+```
+
+### Observation
+
+It can be seen that the older participants prefer to stay at the outskirts of town, furthest from the commercial areas, while the inverse is true for younger participants.
+
+## Plot for Household Size
+
+```{r}
+points_in_hex <- st_join(st_as_sf(participantsModified), 
+                        hex, 
+                        join=st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(hex_id) %>%
+  summarise(householdSize = mean(as.numeric(householdSize)))
+  
+hex_combined <- hex %>%
+  left_join(points_in_hex, 
+            by = 'hex_id') %>%
+  replace(is.na(.), 0)
+  
+p7 <- tm_shape(hex_combined %>%
+           filter(householdSize > 0))+
+  tm_fill("householdSize",
+          n = 3,
+          style = "quantile") +
+  tm_borders(alpha = 0.1)
+
+tmap_arrange(p7, p2, nrow = 1)
+```
+
+### Observation
+
+Larger families prefer to live at the residential areas, while smaller families are observed living close to the commercial areas where the employers and other businesses are.
+
+## Comparison
+
+```{r}
+tmap_arrange(p3, p4, p5, p6, p7, nrow = 3)
+```
+# Question 2
+
+Where are the busiest areas in Engagement? Are there traffic bottlenecks that should be addressed?
+
+## Import Participant Log
+
+The code chunk below extracts the transport data from all the ParticipantsStatusLogs and mutates the data to create a day of the week and hour field. The data is merged into a single dataset called *ParticipantsTravel*.
+
+```{r, eval=FALSE}
+allFiles <- dir(path = "data/Activity Logs/", full.names = TRUE)
+
+ParticipantsTravel <- NULL
+
+for (i in allFiles) {
+  print(i)
+  temp <- read_csv(i)
+  
+  temp <- temp %>%
+    filter(currentMode == "Transport") %>%
+    mutate(day = weekdays.Date(timestamp)) %>%
+    mutate(hour = hour(timestamp)) %>%
+    select(currentLocation, day, hour)
+  
+  ParticipantsTravel <- rbind(ParticipantsTravel, temp)
+  
+  temp <- NULL
+}
+
+```
+
+### Clean and Group By ParticipantsTravel
+
+*ParticipantsTravel* is then group by the location, day and hour to get the count of participants travelling at that particular location, day and hour.
+
+```{r, eval=FALSE}
+ParticipantsTravel2 <- ParticipantsTravel %>%
+  group_by(currentLocation, day, hour) %>%
+  summarise(n = n())
+```
+
+### Convert ParticipantsTravel data type
+```{r, eval=FALSE, echo=FALSE}
+write_csv(ParticipantsTravel2, "data/wkt/ParticipantsTravel.csv")
+```
+
+```{r, echo=FALSE}
+ParticipantsTravel2 <- read_sf("data/wkt/ParticipantsTravel.csv",
+                options = "GEOM_POSSIBLE_NAMES=currentLocation")
+```
+
+```{r}
+ParticipantsTravel2$n <- as.numeric(ParticipantsTravel2$n)
+ParticipantsTravel2$hour <- as.numeric(ParticipantsTravel2$hour)
+```
+
+
+## Peak Hour Histogram
+
+The plot below intends to find out if there are any significant peaks for the different days that we should be focusing on when identifying the bottenecks.
+
+```{r}
+ParticipantsTravel2 %>%
+  mutate(across(day, factor, levels=c("Monday", "Tuesday", "Wednesday",
+                                       "Thursday", "Friday", "Saturday",
+                                       "Sunday"))) %>%
+  ggplot(aes(y= n, x= hour)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(day~.) + 
+  labs(title = "Traffic by Hour of Day", x = "Hour", y = "Count") +
+  theme_minimal()
+
+```
+
+### Observation:
+
+It is observed that there are two distinct peak periods on the weekday, which occur at 6 to 8am and between 4 to 6pm. As for the weekends, there is only one distinct peak between 7 to 8am. There is generally more travelling done over the rest of the day on the weekends compared to the weekdays.
+
+## Plot for Weekday Morning Peak
+
+```{r, eval=FALSE}
+weekday <- c("Monday", "Tuesday", "Wednesday", 
+             "Thursday", "Friday")
+WeekdayMorning <- ParticipantsTravel2 %>%
+  filter(day %in% weekday) %>%
+  filter(hour >= 6 & hour <=8)
+```
+
+```{r, eval=FALSE, echo=FALSE}
+write_rds(WeekdayMorning,
+          "data/rds/WeekdayMorning.rds")
+
+```
+
+```{r, echo=FALSE}
+WeekdayMorning <- read_rds("data/rds/WeekdayMorning.rds")
+```
+
+```{r}
+points_in_hex <- st_join(WeekdayMorning, 
+                        hex, 
+                        join=st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(hex_id) %>%
+  summarise(Count = sum(n))
+  
+hex_combined <- hex %>%
+  left_join(points_in_hex, 
+            by = 'hex_id') %>%
+  replace(is.na(.), 0)
+  
+p8 <- tm_shape(hex_combined %>%
+           filter(Count > 0))+
+  tm_fill("Count",
+          n = 8,
+          style = "quantile") +
+  tm_borders(alpha = 0.1) +
+  tm_layout(title = "Weekday Morning Peak", title.position = c('right','top'))
+
+p2 <- tm_shape(buildings)+
+tm_polygons(col = "white",
+           size = 1,
+           border.col = "black",
+           border.lwd = 1) +
+  tm_layout(title = "Base Map", title.position = c('right','top'))
+
+tmap_arrange(p8, p2, nrow = 1)
+```
+
+### Further Deep Dive into Worst Areas
+
+```{r}
+p11 <- tm_shape(hex_combined %>%
+           filter(Count > 4100))+
+  tm_fill("Count",
+          n = 8,
+          style = "quantile") +
+  tm_borders(alpha = 0.1) +
+  tm_layout(title = "Weekday Morning Peak", title.position = c('right','top'))
+
+p2 <- tm_shape(buildings)+
+tm_polygons(col = "white",
+           size = 1,
+           border.col = "black",
+           border.lwd = 1) +
+  tm_layout(title = "Base Map", title.position = c('right','top'))
+
+tmap_arrange(p11, p2, nrow = 1)
+```
+
+## Plot for Weekday Evening Peak
+
+```{r, eval=FALSE}
+weekday <- c("Monday", "Tuesday", "Wednesday", 
+             "Thursday", "Friday")
+WeekdayEvening <- ParticipantsTravel2 %>%
+  filter(day %in% weekday) %>%
+  filter(hour >= 16 & hour <= 18)
+```
+
+```{r, eval=FALSE, echo=FALSE}
+write_rds(WeekdayEvening,
+          "data/rds/WeekdayEvening.rds")
+
+```
+
+```{r, echo=FALSE}
+WeekdayEvening <- read_rds("data/rds/WeekdayEvening.rds")
+```
+
+```{r}
+points_in_hex <- st_join(WeekdayEvening, 
+                        hex, 
+                        join=st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(hex_id) %>%
+  summarise(Count = sum(n))
+  
+hex_combined <- hex %>%
+  left_join(points_in_hex, 
+            by = 'hex_id') %>%
+  replace(is.na(.), 0)
+  
+p9 <- tm_shape(hex_combined %>%
+           filter(Count > 0))+
+  tm_fill("Count",
+          n = 8,
+          style = "quantile") +
+  tm_borders(alpha = 0.1) +
+  tm_layout(title = "Weekday Evening Peak", title.position = c('right','top'))
+
+p2 <- tm_shape(buildings)+
+tm_polygons(col = "white",
+           size = 1,
+           border.col = "black",
+           border.lwd = 1) +
+  tm_layout(title = "Base Map", title.position = c('right','top'))
+
+tmap_arrange(p9, p2, nrow = 1)
+```
+
+### Further Deep Dive into Worst Areas
+
+```{r}
+p12 <- tm_shape(hex_combined %>%
+           filter(Count > 5200))+
+  tm_fill("Count",
+          n = 8,
+          style = "quantile") +
+  tm_borders(alpha = 0.1) +
+  tm_layout(title = "Weekday Evening Peak", title.position = c('right','top'))
+
+p2 <- tm_shape(buildings)+
+tm_polygons(col = "white",
+           size = 1,
+           border.col = "black",
+           border.lwd = 1) +
+  tm_layout(title = "Base Map", title.position = c('right','top'))
+
+tmap_arrange(p12, p2, nrow = 1)
+```
+
+## Plot for Weekend Morning Peak
+
+```{r, eval=FALSE}
+weekend <- c("Saturday", "Sunday")
+WeekendMorning <- ParticipantsTravel2 %>%
+  filter(day %in% weekend) %>%
+  filter(hour >= 7 & hour <= 8)
+```
+
+```{r, eval=FALSE, echo=FALSE}
+write_rds(WeekendMorning,
+          "data/rds/WeekendMorning.rds")
+
+```
+
+```{r, echo=FALSE}
+WeekendMorning <- read_rds("data/rds/WeekendMorning.rds")
+```
+
+```{r}
+points_in_hex <- st_join(WeekendMorning, 
+                        hex, 
+                        join=st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(hex_id) %>%
+  summarise(Count = sum(n))
+  
+hex_combined <- hex %>%
+  left_join(points_in_hex, 
+            by = 'hex_id') %>%
+  replace(is.na(.), 0)
+  
+p10 <- tm_shape(hex_combined %>%
+           filter(Count > 0))+
+  tm_fill("Count",
+          n = 8,
+          style = "quantile") +
+  tm_borders(alpha = 0.1) +
+  tm_layout(title = "Weekend Morning Peak", title.position = c('right','top'))
+
+p2 <- tm_shape(buildings)+
+tm_polygons(col = "white",
+           size = 1,
+           border.col = "black",
+           border.lwd = 1) +
+  tm_layout(title = "Base Map", title.position = c('right','top'))
+
+tmap_arrange(p10, p2, nrow = 1)
+```
+
+### Further Deep Dive into Worst Areas
+
+```{r}
+p13 <- tm_shape(hex_combined %>%
+           filter(Count > 815))+
+  tm_fill("Count",
+          n = 8,
+          style = "quantile") +
+  tm_borders(alpha = 0.1) +
+  tm_layout(title = "Weekend Morning Peak", title.position = c('right','top'))
+
+p2 <- tm_shape(buildings)+
+tm_polygons(col = "white",
+           size = 1,
+           border.col = "black",
+           border.lwd = 1) +
+  tm_layout(title = "Base Map", title.position = c('right','top'))
+
+tmap_arrange(p13, p2, nrow = 1)
+```
+
+## Comparison of General Peak Hour
+```{r}
+tmap_arrange(p8, p9, p10)
+```
+
+### Observation
+
+It can be seen that there is not much different in terms of the bottleneck that is observed during the different peaks. All of the bottlenecks occur along what could be assumed to be the roads connecting the different areas of the city. These roads that form the main artery of the city seems to be the primary route of travel for the participants.
+
+The bottlenecks are worst during the weekday evening peak and the best during the weekend morning peak. To ease these bottlenecks, participants can be incentivied to travel at other hours of the day instead.
+
+## Comparison of Worst Areas during Peak Hour
+```{r}
+tmap_arrange(p11, p12, p13, nrow = 1)
+```
+
+### Observation
+
+It can be seen that travel pattern for the weekend is slightly more generalized for the weekend, with there being only a small number of badly congested areas.
