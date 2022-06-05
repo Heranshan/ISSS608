@@ -1,0 +1,317 @@
+---
+title: "Take-home Exercise 6"
+description: |
+  In this take home exercise I will study the social network of the town in the [Vast Challenge 2022](https://vast-challenge.github.io/2022/) dataset.
+author:
+  - name: Heranshan Subramaniam
+    url: https://www.linkedin.com/in/heranshan/
+    affiliation: School of Computing and Information Systems
+    affiliation_url: https://scis.smu.edu.sg/
+date: "`r Sys.Date()`"
+output: distill::distill_article
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, message = FALSE,
+                      warning = FALSE, fig.retina = 3)
+```
+
+# Overview
+ 
+In this exercise I will use visual analytic techniques to address this question:
+
+1) What patterns can be seen fromm the social networks in the town?
+
+# Getting Started
+
+The required packages will be called with the following code chunk:
+
+```{r}
+packages = c('igraph', 'tidygraph', 
+             'ggraph', 'visNetwork', 
+             'lubridate', 'clock',
+             'tidyverse', 'graphlayouts')
+
+for (p in packages){
+  if(!require(p, character.only = T)){
+    install.packages(p)
+  }
+  library(p,character.only = T)
+}
+```
+
+
+# Import Data
+
+The SocialNetwork and ParticipantNodes data will be imported using the code chunks below:
+
+```{r, eval=FALSE}
+SocialNetwork <- read_csv("data/SocialNetwork.csv")
+```
+
+```{r}
+ParticipantNodes <- read_csv("data/Participants.csv")
+```
+
+# Data Wrangling
+
+## ParticipantNodes Changes 
+
+Change householdsize to character to use it as a category.
+
+```{r}
+ParticipantNodes$householdSize <- as.character(ParticipantNodes$householdSize)
+```
+
+Split age and joviality into quartiles. 1st quartile represents the lowest value and the 4th quartile represents the highest value.
+
+```{r}
+ParticipantNodes <- ParticipantNodes %>%
+  mutate(ageQuartile = as.character(ntile(age, 4))) %>%
+  mutate(jovialityQuartile = as.character(ntile(joviality, 4)))
+```
+
+Drop age and joviality columns as they are no longer needed:
+
+```{r}
+drop <- c("age", "joviality")
+
+ParticipantNodes <- ParticipantNodes[, !(names(ParticipantNodes) %in% drop)]
+```
+
+Next create a day attribute for SocialNetwork data:
+
+```{r, eval=FALSE}
+SocialNetwork <- SocialNetwork %>%
+  mutate(day = weekdays(timestamp))
+```
+
+Aggregate data to tidygraph format:
+
+```{r, eval =FALSE}
+SocialNetworkAggregated <- SocialNetwork %>%
+  group_by(participantIdFrom, participantIdTo, day) %>%
+  summarise(Weight = n()) %>%
+  filter(participantIdFrom != participantIdTo) %>%
+  filter(Weight>40) %>%
+  ungroup()
+```
+
+```{r, echo=FALSE, eval=FALSE}
+write_rds(SocialNetworkAggregated, "data/rds/SocialNetworkAggregated.rds")
+```
+
+```{r, echo=FALSE}
+SocialNetworkAggregated <- read_rds("data/rds/SocialNetworkAggregated.rds")
+```
+
+Filter notes for those selected:
+
+```{r}
+NodesSelected <- c(SocialNetworkAggregated$participantIdFrom, 
+                   SocialNetworkAggregated$participantIdTo)
+NodesSelected <- c(unique(NodesSelected))
+```
+
+```{r}
+ParticipantNodesSelected <- subset(ParticipantNodes, 
+                                   ParticipantNodes$participantId 
+                                   %in% NodesSelected)
+```
+
+Create cgraph:
+
+```{r}
+cgraph <- graph_from_data_frame(SocialNetworkAggregated, vertices = 
+                                  ParticipantNodesSelected, directed = TRUE) %>%
+  as_tbl_graph()
+```
+
+Activate Edges:
+
+```{r}
+cgraph %>%
+  activate(edges) %>%
+  arrange(desc(Weight))
+```
+
+
+# Plots
+
+## General Network Plot
+
+```{r}
+g <- ggraph(cgraph,
+       layout = "nicely") +
+  geom_edge_link(aes()) +
+  geom_node_point(aes())
+
+g + theme_graph()
+```
+Observation:
+
+It is observed from the general network plot that there are many micro networks surrounding the main network. Centrality filters will be used to clean up.
+
+## Cumulative Frequency Plot
+
+```{r}
+deg.dist <- degree_distribution(cgraph, cumulative=T, mode="all")
+plot( x=0:max(degree(cgraph)), y=1-deg.dist, pch=19, cex=1.2, col="orange", 
+      xlab="Degree", ylab="Cumulative Frequency")
+```
+Observation:
+
+It is observed that the cumulative frequency graph for degree follows a sigmoidal shape, indicating that it follows a Gaussian distribution (Normal Distribution).
+
+
+
+## Eigenvector Centrality Plots
+
+Eigenvector centrality measures a node’s importance while giving consideration to the importance of its neighbors. For example. a person with few connections could have a very high eigenvector centrality if those few connections were to be very well-connected others. 
+
+### Education Level
+
+```{r}
+cgraph %>% 
+    mutate(centrality = centrality_eigen()) %>%
+    filter(centrality > 0.01) %>%
+    ggraph(layout = 'kk') + 
+    geom_edge_link(aes()) + 
+    geom_node_point(aes(size = centrality, colour = educationLevel)) + 
+    labs(title = 'Eigenvector Centrality by Education Level', 
+         colour = "Education Level") +
+    theme_graph()
+```
+
+Observation:
+
+It can be seen that the nodes with the highest eigenvector centrality tend to be either of graduate or bachelor education level. Those of low education level tend to have low eigenvector centrality.
+
+### Household Size
+
+```{r}
+cgraph %>% 
+    mutate(centrality = centrality_eigen()) %>%
+    filter(centrality > 0.01) %>%
+    ggraph(layout = 'kk') + 
+    geom_edge_link() + 
+    geom_node_point(aes(size = centrality, colour = householdSize)) + 
+    labs(title = 'Eigenvector Centrality by Household Size', 
+         colour = "Household Size") +
+    theme_graph()
+```
+
+Observation:
+
+Nodes with the highest eigenvector centrality tend to be either of household size 2 or 3. Single member households tend to have low eigenvector centrality, indicating that they are not well connected to influential nodes.
+
+## Joviality Level
+
+```{r}
+cgraph %>% 
+    mutate(centrality = centrality_eigen()) %>%
+    filter(centrality > 0.01) %>%
+    ggraph(layout = 'kk') + 
+    geom_edge_link() + 
+    geom_node_point(aes(size = centrality, colour = jovialityQuartile)) + 
+    labs(title = 'Eigenvector Centrality by Joviality', 
+         colour = "Joviality Quartile") +
+    theme_graph()
+```
+
+Observation:
+
+Those with the lowest joviality had the lowest eigenvector centrality value. This indicates that more joviality played a role in eigenvector centrality value.
+
+## Age Group
+
+```{r}
+cgraph %>% 
+    mutate(centrality = centrality_eigen()) %>%
+    filter(centrality > 0.01) %>%
+    ggraph(layout = 'kk') + 
+    geom_edge_link() + 
+    geom_node_point(aes(size = centrality, colour = ageQuartile)) + 
+    labs(title = 'Eigenvector Centrality by Age', 
+         colour = "Age Quartile") +
+    theme_graph()
+```
+
+Observation:
+
+The nodes with the highest eigenvector centrality tend to be those of the 2nd and 3rd age quartile. This indicates that the being too young or too old influences the connections a person has. 
+
+
+# Interactive Visualization
+
+Code chunk below is used to create a new SocialNetworkAggregatedCopy
+
+```{r, eval=FALSE}
+SocialNetworkAggregatedCopy <- NULL
+SocialNetworkAggregatedCopy <- SocialNetwork %>%
+  left_join(ParticipantNodesSelected, by = c("participantIdFrom" = "participantId")) %>%
+  rename(from = participantIdFrom) %>%
+  left_join(ParticipantNodesSelected, by = c("participantIdTo" = "participantId")) %>%
+  rename(to = participantIdTo) %>%
+  group_by(from, to) %>%
+    summarise(weight = n()) %>%
+  filter(from!=to) %>%
+  filter(weight > 150) %>%
+  ungroup()
+```
+```{r, echo=FALSE, eval=FALSE}
+write_rds(SocialNetworkAggregatedCopy, "data/rds/SocialNetworkAggregatedCopy.rds")
+```
+
+```{r, echo=FALSE}
+SocialNetworkAggregatedCopy <- read_rds("data/rds/SocialNetworkAggregatedCopy.rds")
+```
+
+## Interactive Plot for Age Groups
+
+```{r}
+ParticipantsCopy <- ParticipantNodesSelected
+names(ParticipantsCopy)[names(ParticipantsCopy) == "participantId"] <- "id"
+names(ParticipantsCopy)[names(ParticipantsCopy) == "ageQuartile"] <- "group"
+```
+
+
+```{r}
+visNetwork(ParticipantsCopy,
+           SocialNetworkAggregatedCopy,
+           height = "700px", width = "100%") %>%
+  visIgraphLayout(layout = "layout_with_fr") %>%
+  visOptions(highlightNearest = TRUE,
+             selectedBy = "group") %>%
+  visLegend()
+```
+
+## Interactive Plot for Interest Group
+
+```{r}
+ParticipantsCopy <- ParticipantNodesSelected
+names(ParticipantsCopy)[names(ParticipantsCopy) == "participantId"] <- "id"
+names(ParticipantsCopy)[names(ParticipantsCopy) == "interestGroup"] <- "group"
+```
+
+
+```{r}
+visNetwork(ParticipantsCopy,
+           SocialNetworkAggregatedCopy,
+           height = "700px", width = "100%") %>%
+  visIgraphLayout(layout = "layout_with_fr") %>%
+  visOptions(highlightNearest = TRUE,
+             selectedBy = "group") %>%
+  visLegend()
+```
+
+Observation:
+
+Participants of interest group E were the least connected to each other, indicating that this may not be a group activity.
+
+
+# Areas for Improvements
+
+1. More attributes of participants could be extracted from participant logs and studied
+2. Weight would be studied further. It was not included in current plots as it made the visualizations too cluttered
+
